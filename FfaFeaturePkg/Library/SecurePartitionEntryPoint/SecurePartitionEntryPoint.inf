@@ -1,0 +1,50 @@
+## @file
+# Module entry point library for DXE core.
+#
+# Copyright (c) 2017 - 2021, Arm Ltd. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = SecurePartitionEntryPoint
+  FILE_GUID                      = D2753EFE-C208-4BE6-9816-B4B4A45C6E48
+  MODULE_TYPE                    = MM_CORE_STANDALONE
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  LIBRARY_CLASS                  = StandaloneMmCoreEntryPoint|MM_CORE_STANDALONE
+
+#
+#  VALID_ARCHITECTURES           = AARCH64
+#
+
+[Sources]
+  StandaloneMmCoreEntryPoint.c
+  SetPermissions.c
+  AArch64/ModuleEntryPoint.S
+
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  StandaloneMmPkg/StandaloneMmPkg.dec
+  ArmPkg/ArmPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  FdtLib
+  ArmSvcLib
+
+#
+# This configuration fails for CLANGPDB, which does not support PIE in the GCC
+# sense. Such however is required for ARM family StandaloneMmCore
+# self-relocation, and thus the CLANGPDB toolchain is unsupported for ARM and
+# AARCH64 for this module.
+#
+[BuildOptions]
+  GCC:*_*_ARM_CC_FLAGS = -fpie
+  GCC:*_*_AARCH64_CC_FLAGS = -fpie
