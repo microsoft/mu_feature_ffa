@@ -147,6 +147,7 @@
   ArmPkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
   ArmPkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
   ArmPkg/Library/SecurePartitionServicesTableLib/SecurePartitionServicesTableLib.inf
+  ArmPkg/Library/SecurePartitionMemoryAllocationLib/SecurePartitionMemoryAllocationLib.inf
 
   ArmPkg/Drivers/CpuDxe/CpuDxe.inf
   ArmPkg/Drivers/CpuPei/CpuPei.inf
