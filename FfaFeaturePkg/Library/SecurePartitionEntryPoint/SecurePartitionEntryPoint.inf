@@ -1,5 +1,5 @@
 ## @file
-# Module entry point library for DXE core.
+# Secure Partition System Table library implementation.
 #
 # Copyright (c) 2017 - 2021, Arm Ltd. All rights reserved.<BR>
 #
@@ -38,6 +38,7 @@
   DebugLib
   FdtLib
   ArmSvcLib
+  SecurePartitionServicesTableLib
 
 #
 # This configuration fails for CLANGPDB, which does not support PIE in the GCC
