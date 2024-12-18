@@ -144,5 +144,7 @@
   FfaFeaturePkg/Library/TpmServiceLib/TpmServiceLib.inf
   FfaFeaturePkg/Library/TpmServiceStateTranslationLib/TpmServiceStateTranslationLib.inf
 
+  FfaFeaturePkg/Library/ArmArchTimerLibEx/ArmArchTimerLibEx.inf
+
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
