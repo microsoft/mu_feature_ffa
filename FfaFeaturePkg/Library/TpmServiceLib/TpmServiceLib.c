@@ -26,9 +26,9 @@
 #define TPM_CTRL_START_MASK  (0x01)
 
 // Default Value - tpmEstablished
-#define TPM_LOC_STATE_DEFAULT     (0x01)
+#define TPM_LOC_STATE_DEFAULT  (0x01)
 // Default Value - CRB Interface Selected, Only Locality0 Supported
-#define TPM_INTERFACE_ID_DEFAULT  (0x4011) 
+#define TPM_INTERFACE_ID_DEFAULT  (0x4011)
 
 typedef UINTN TpmStatus;
 
@@ -89,7 +89,7 @@ InitInternalCrb (
   DEBUG ((DEBUG_INFO, "PcdTpmInternalBaseAddress: %lx\n", PcdGet64 (PcdTpmInternalBaseAddress)));
   SetMem ((void *)InternalTpmCrb, sizeof (PTP_CRB_REGISTERS), 0x00);
   InternalTpmCrb->LocalityState = TPM_LOC_STATE_DEFAULT;
-  InternalTpmCrb->InterfaceId   = TPM_INTERFACE_ID_DEFAULT; 
+  InternalTpmCrb->InterfaceId   = TPM_INTERFACE_ID_DEFAULT;
 }
 
 /**
@@ -171,13 +171,23 @@ HandleCommand (
   /* Set the status to ready (i.e. not idle) */
   InternalTpmCrb->CrbControlStatus = 0;
 
+  /* Copy the command data to the static buffer */
+  UINT8   TpmCommandBuffer[sizeof (InternalTpmCrb->CrbDataBuffer)];
+  UINT32  ResponseDataLen = InternalTpmCrb->CrbControlResponseSize;
+  UINT32  CommandDataLen  = InternalTpmCrb->CrbControlCommandSize;
+
+  CopyMem (TpmCommandBuffer, InternalTpmCrb->CrbDataBuffer, CommandDataLen);
+
   /* Submit the command to the TPM */
   EFI_STATUS  Status = Tpm2SubmitCommand (
-                         InternalTpmCrb->CrbControlCommandSize,
-                         InternalTpmCrb->CrbDataBuffer,
-                         &InternalTpmCrb->CrbControlResponseSize,
-                         InternalTpmCrb->CrbDataBuffer
+                         CommandDataLen,
+                         TpmCommandBuffer,
+                         &ResponseDataLen,
+                         TpmCommandBuffer
                          );
+
+  /* Copy the response data from the static buffer */
+  CopyMem (InternalTpmCrb->CrbDataBuffer, TpmCommandBuffer, ResponseDataLen);
 
   /* Clear the internal CRB start register to indicate successful completion and response ready */
   if (Status == EFI_SUCCESS) {
