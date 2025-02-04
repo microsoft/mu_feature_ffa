@@ -140,6 +140,7 @@
   FfaFeaturePkg/Library/SecurePartitionMemoryAllocationLib/SecurePartitionMemoryAllocationLib.inf
 
   FfaFeaturePkg/Library/NotificationServiceLib/NotificationServiceLib.inf
+  FfaFeaturePkg/Library/TestServiceLib/TestServiceLib.inf
 
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
