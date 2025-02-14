@@ -43,7 +43,7 @@ TestNotificationHandler (
   /* Set the notification set flag to be a delayed SRI */
   UINT32  Flag = (1 << DELAYED_SRI_BIT_POS);
 
-  UINT16              LogicalId = Request->Arg3;
+  UINT32              LogicalId = Request->Arg3;
   NotificationStatus  Status    = NotificationServiceIdSet (LogicalId, Uuid, Flag);
 
   /* Check for a valid UUID and validate the input parameters */
