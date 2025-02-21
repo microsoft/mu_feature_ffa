@@ -1,0 +1,33 @@
+#/** @file
+#
+#  Component description file for FfaHelperLib module
+#
+#  Copyright (c), Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#**/
+
+[Defines]
+  INF_VERSION                    = 1.29
+  BASE_NAME                      = ArmFfaLibEx
+  FILE_GUID                      = CC121A12-7C90-46BB-89B8-5F5BAEEFFF12
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ArmFfaLibEx
+
+[Sources.common]
+  ArmFfaLibEx.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ArmPkg/ArmPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  PlatformFfaInterruptLib
+  ArmSvcLib
+  ArmSmcLib
+
+[Pcd]
+  gArmTokenSpaceGuid.PcdFfaLibConduitSmc
