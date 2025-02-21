@@ -44,3 +44,11 @@
   ##  @libraryclass  Provides an implementation of the Notification Service
   #
   NotificationServiceLib|Include/Library/NotificationServiceLib.h
+
+  ##  @libraryclass  Provides an implementation of the Test Service
+  #
+  TestServiceLib|Include/Library/TestServiceLib.h
+
+  ##  @libraryclass  Provides an implementation of the TPM Service
+  #
+  TpmServiceLib|Include/Library/TpmServiceLib.h
