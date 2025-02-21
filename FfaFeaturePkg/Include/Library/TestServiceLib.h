@@ -16,18 +16,6 @@
 
 typedef INT32 TestStatus;
 
-#define TEST_STATUS_SUCCESS            ((TestStatus)0)
-#define TEST_STATUS_GENERIC_ERROR      ((TestStatus)-1)
-#define TEST_STATUS_INVALID_PARAMETER  ((TestStatus)-2)
-
-#define TEST_OPCODE_BASE               (0xDEF0)
-#define TEST_OPCODE_TEST_NOTIFICATION  (TEST_OPCODE_BASE + 0x01)
-
-#define TEST_SERVICE_UUID \
-{ \
-  0xe0fad9b3, 0x7f5c, 0x42c5, { 0xb2, 0xee, 0xb7, 0xa8, 0x23, 0x13, 0xcd, 0xb2 } \
-}
-
 /**
   Initializes the Test service
 

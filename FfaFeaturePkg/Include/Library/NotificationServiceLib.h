@@ -16,20 +16,6 @@
 
 typedef INT32 NotificationStatus;
 
-#define NOTIFICATION_STATUS_SUCCESS            ((NotificationStatus)0)
-#define NOTIFICATION_STATUS_GENERIC_ERROR      ((NotificationStatus)-1)
-#define NOTIFICATION_STATUS_INVALID_PARAMETER  ((NotificationStatus)-2)
-
-#define NOTIFICATION_OPCODE_BASE     (0)
-#define NOTIFICATION_OPCODE_QUERY    (NOTIFICATION_OPCODE_BASE + 0)
-#define NOTIFICATION_OPCODE_SETUP    (NOTIFICATION_OPCODE_BASE + 1)
-#define NOTIFICATION_OPCODE_DESTROY  (NOTIFICATION_OPCODE_BASE + 2)
-
-#define NOTIFICATION_SERVICE_UUID \
-{ \
-    0xb510b3a3, 0x59f6, 0x4054, { 0xba, 0x7a, 0xff, 0x2e, 0xb1, 0xea, 0xc7, 0x65 } \
-}
-
 /**
   Initializes the Notification service
 

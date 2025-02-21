@@ -11,6 +11,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/TestServiceLib.h>
 #include <Library/NotificationServiceLib.h>
+#include <Guid/TestServiceFfa.h>
+#include <Guid/NotificationServiceFfa.h>
 
 /* Test Service Defines */
 #define DELAYED_SRI_BIT_POS  (1)
