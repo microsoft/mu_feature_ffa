@@ -1,0 +1,101 @@
+##
+# CI configuration for FfaFeaturePkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "FfaFeaturePkg.dsc",
+    },
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "FfaFeaturePkg.dsc"
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "ArmPkg/ArmPkg.dec",
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "SecurityPkg/SecurityPkg.dec",
+            "StandaloneMmPkg/StandaloneMmPkg.dec",
+            "FfaFeaturePkg/FfaFeaturePkg.dec",
+            "EmbeddedPkg/EmbeddedPkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+        ],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "FfaFeaturePkg.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": ""
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": ""
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "AuditOnly": False,           # Fails test but run in AuditOnly mode to collect log
+        "IgnoreFiles": [],            # use gitignore syntax to ignore errors in matching files
+        "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
+        "ExtendWords": [
+          lodsd,
+          debugport,
+          infor,
+          valist,
+          premem,
+          uncacheable,
+          physmask,
+          PHYSBASE,
+          DEADLOOP,
+          LOGTELEMETRY,
+          DEBUGAGENT,
+          POSTMEM,
+          MMARM,
+          DDISABLE,
+          Deinitializes,
+          RQUUSE
+        ]
+    },
+
+    "RustHostUnitTestPlugin": {
+        "Coverage": .75,
+        "CoverageOverrides": {}
+    }
+}
