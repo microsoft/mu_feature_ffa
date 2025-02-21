@@ -52,3 +52,12 @@
   ##  @libraryclass  Provides an implementation of the TPM Service
   #
   TpmServiceLib|Include/Library/TpmServiceLib.h
+
+[Guids.common]
+  ## Notification Service over FF-A
+  # Include/Guid/NotificationServiceFfa.h
+  gEfiNotificationServiceFfaGuid = { 0xb510b3a3, 0x59f6, 0x4054, { 0xba, 0x7a, 0xff, 0x2e, 0xb1, 0xea, 0xc7, 0x65 } }
+
+  ## Test Service over FF-A
+  # Include/Guid/TestServiceFfa.h
+  gEfiTestServiceFfaGuid = { 0xe0fad9b3, 0x7f5c, 0x42c5, { 0xb2, 0xee, 0xb7, 0xa8, 0x23, 0x13, 0xcd, 0xb2 } }

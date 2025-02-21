@@ -10,6 +10,7 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/NotificationServiceLib.h>
+#include <Guid/NotificationServiceFfa.h>
 
 /* Notification Service Defines */
 #define NOTIFICATION_MAX_SERVICES  (16)
