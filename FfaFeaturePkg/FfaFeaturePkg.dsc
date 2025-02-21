@@ -201,7 +201,7 @@
   ArmPkg/Drivers/SmmuDxe/SmmuDxe.inf
   # MU_CHANGE [END]
 
-# [Components.common.MM_CORE_STANALONE] MU_CHANGE
+  ArmPkg/Library/NotificationServiceLib/NotificationServiceLib.inf
   ArmPkg/Library/ArmStandaloneMmCoreEntryPoint/ArmStandaloneMmCoreEntryPoint.inf
 
 # [Components.common.MM_STANDALONE] MU_CHANGE

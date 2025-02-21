@@ -1,0 +1,35 @@
+#/** @file
+#
+#  Component description file for the Notification Service
+#
+#  Copyright (c), Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#**/
+
+[Defines]
+  INF_VERSION                    = 1.29
+  BASE_NAME                      = NotificationServiceLib
+  FILE_GUID                      = 115afb27-e754-4618-8ff8-9e7efbd9998a
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = NotificationServiceLib
+
+[Sources.common]
+  NotificationServiceLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ArmPkg/ArmPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  PlatformFfaInterruptLib
+  ArmSvcLib
+  ArmSmcLib
+  ArmFfaLib
+  ArmFfaLibEx
+
+[Pcd]
+  gArmTokenSpaceGuid.PcdFfaLibConduitSmc
