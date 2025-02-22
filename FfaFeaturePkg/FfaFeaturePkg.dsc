@@ -135,6 +135,7 @@
 
 [Components.common]
   FfaFeaturePkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
+  FfaFeaturePkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
 
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
