@@ -53,6 +53,10 @@
   #
   TpmServiceLib|Include/Library/TpmServiceLib.h
 
+  ##  @libraryclass  Provides an translation library for the TPM Service
+  #
+  TpmServiceStateTranslationLib|Include/Library/TpmServiceStateTranslationLib.h
+
 [Guids.common]
   ## Notification Service over FF-A
   # Include/Guid/NotificationServiceFfa.h
