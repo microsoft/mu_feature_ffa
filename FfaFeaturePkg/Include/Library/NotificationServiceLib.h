@@ -61,7 +61,7 @@ NotificationServiceHandle (
 **/
 NotificationStatus
 NotificationServiceIdSet (
-  UINT16  Id,
+  UINT32  Id,
   UINT8   *ServiceUuid,
   UINT32  Flag
   );

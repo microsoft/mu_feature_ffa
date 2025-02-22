@@ -19,8 +19,8 @@
 
 /* Notification Service Structures */
 typedef struct {
-  UINT16     BitNum; // The OS translation bitmap value
-  UINT16     IdNum;  // The logical ID for the service
+  UINT32     BitNum; // The OS translation bitmap value
+  UINT32     IdNum;  // The logical ID for the service
   BOOLEAN    InUse;
 } NotifBits;
 
@@ -49,7 +49,7 @@ STATIC NotifService  NotificationServices[NOTIFICATION_MAX_SERVICES] = { 0 };
 STATIC
 INT8
 IsMatchingId (
-  UINT16        IdNum,
+  UINT32        IdNum,
   NotifService  *Service
   )
 {
@@ -104,7 +104,7 @@ ValidParameters (
   for (UINT8 i = 0; i < NumBits; i++) {
     /* Validate that a user is not trying to setup an ID that has already been setup previously or
       * attempting to destroy an ID that doesn't exist. */
-    UINT16  NotificationId = Mappings[i];
+    UINT32  NotificationId = Mappings[i];
     INT8    IdIndex        = IsMatchingId (NotificationId, Service);
     if (!Destroy && (IdIndex != NOTIFICATION_ID_NOT_FOUND)) {
       return FALSE;
@@ -114,7 +114,7 @@ ValidParameters (
 
     /* Validate that a user is not trying to set a bit that is already in use or destroy a bit
       * they haven't previously set up. */
-    UINT16  BitmapBitNum = (Mappings[i] >> 16);
+    UINT32  BitmapBitNum = ((UINT64)Mappings[i] >> 32);
     if (!Destroy && (GlobalBitmask & (1 << BitmapBitNum))) {
       return FALSE;
     } else if (Destroy && (Service->ServiceBits[IdIndex].BitNum != BitmapBitNum)) {
@@ -156,8 +156,8 @@ UpdateServiceBits (
   UINTN  *Mappings = &Request->Arg4;
 
   for (UINT8 i = 0; i < NumBits; i++) {
-    UINT16  NotificationId = Mappings[i];
-    UINT16  BitmapBitNum   = Mappings[i] >> 16;
+    UINT32  NotificationId = Mappings[i];
+    UINT32  BitmapBitNum   = (UINT64)Mappings[i] >> 32;
 
     if (Destroy) {
       /* If we can not find the ID to destroy, it is an error */
@@ -442,7 +442,7 @@ NotificationServiceHandle (
 **/
 NotificationStatus
 NotificationServiceIdSet (
-  UINT16  Id,
+  UINT32  Id,
   UINT8   *ServiceUuid,
   UINT32  Flag
   )
