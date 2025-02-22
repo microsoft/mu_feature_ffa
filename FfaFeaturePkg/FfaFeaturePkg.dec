@@ -36,3 +36,7 @@
   ##  @libraryclass  Provides an interface for a Arm FF-A ABI.
   #
   ArmFfaLibEx|Include/Library/ArmFfaLibEx.h
+
+  ##  @libraryclass  Provides a services table for Secure partitions.
+  #
+  SecurePartitionServicesTableLib|Include/Library/SecurePartitionServicesTableLib.h
