@@ -133,5 +133,8 @@
   MemoryAllocationLib|StandaloneMmPkg/Library/StandaloneMmMemoryAllocationLib/StandaloneMmMemoryAllocationLib.inf
   ArmFfaLib|ArmPkg/Library/ArmFfaLib/ArmFfaStandaloneMmLib.inf
 
+[Components.common]
+  FfaFeaturePkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
+
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
