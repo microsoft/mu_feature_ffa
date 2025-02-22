@@ -139,5 +139,7 @@
   FfaFeaturePkg/Library/SecurePartitionServicesTableLib/SecurePartitionServicesTableLib.inf
   FfaFeaturePkg/Library/SecurePartitionMemoryAllocationLib/SecurePartitionMemoryAllocationLib.inf
 
+  FfaFeaturePkg/Library/NotificationServiceLib/NotificationServiceLib.inf
+
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
