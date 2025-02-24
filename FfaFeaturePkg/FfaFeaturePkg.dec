@@ -48,3 +48,7 @@
   ##  @libraryclass  Provides an implementation of the Test Service
   #
   TestServiceLib|Include/Library/TestServiceLib.h
+
+  ##  @libraryclass  Provides an implementation of the TPM Service
+  #
+  TpmServiceLib|Include/Library/TpmServiceLib.h

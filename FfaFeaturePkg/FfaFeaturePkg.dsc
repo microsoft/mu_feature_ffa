@@ -141,6 +141,7 @@
 
   FfaFeaturePkg/Library/NotificationServiceLib/NotificationServiceLib.inf
   FfaFeaturePkg/Library/TestServiceLib/TestServiceLib.inf
+  FfaFeaturePkg/Library/TpmServiceLib/TpmServiceLib.inf
 
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
