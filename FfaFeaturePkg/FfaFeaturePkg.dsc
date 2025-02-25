@@ -150,3 +150,6 @@
 
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
+
+[Components.common.UEFI_APPLICATION]
+  FfaFeaturePkg/Applications/FfaPartitionTest/FfaPartitionTestApp.inf
