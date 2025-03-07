@@ -34,17 +34,21 @@ TestNotificationHandler (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
-  UINT8       Uuid[16]  = { 0 };
-  TestStatus  ReturnVal = TEST_STATUS_INVALID_PARAMETER;
+  UINT8               Uuid[16];
+  TestStatus          ReturnVal;
+  UINT32              Flag;
+  UINT32              LogicalId;
+  NotificationStatus  Status;
+
+  ReturnVal = TEST_STATUS_INVALID_PARAMETER;
 
   /* Extract the UUID from the message */
   NotificationServiceExtractUuid (Request, Uuid);
 
   /* Set the notification set flag to be a delayed SRI */
-  UINT32  Flag = (1 << DELAYED_SRI_BIT_POS);
-
-  UINT32              LogicalId = Request->Arg3;
-  NotificationStatus  Status    = NotificationServiceIdSet (LogicalId, Uuid, Flag);
+  Flag      = (1 << DELAYED_SRI_BIT_POS);
+  LogicalId = Request->Arg3;
+  Status    = NotificationServiceIdSet (LogicalId, Uuid, Flag);
 
   /* Check for a valid UUID and validate the input parameters */
   if (Status == NOTIFICATION_STATUS_SUCCESS) {
@@ -94,12 +98,14 @@ TestServiceHandle (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
+  UINT64  Opcode;
+
   /* Validate the input parameters before attempting to dereference or pass them along */
   if ((Request == NULL) || (Response == NULL)) {
     return;
   }
 
-  UINT64  Opcode = Request->Arg0;
+  Opcode = Request->Arg0;
 
   switch (Opcode) {
     case TEST_OPCODE_TEST_NOTIFICATION:
