@@ -53,76 +53,20 @@ IsMatchingId (
   NotifService  *Service
   )
 {
+  UINT8 Index;
+
   /* Validate the incoming function parameters */
   if (Service == NULL) {
     return NOTIFICATION_ID_NOT_FOUND;
   }
 
-  for (UINT8 i = 0; i < NOTIFICATION_MAX_IDS; i++) {
-    if (Service->ServiceBits[i].InUse && (Service->ServiceBits[i].IdNum == IdNum)) {
-      return i;
+  for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
+    if (Service->ServiceBits[Index].InUse && (Service->ServiceBits[Index].IdNum == IdNum)) {
+      return Index;
     }
   }
 
   return NOTIFICATION_ID_NOT_FOUND;
-}
-
-/**
-  Validates the incoming message parameters
-
-  @param  Destroy   Whether or not we are adding or removing bit information
-  @param  Request   The incoming message containing the bit information to validate
-  @param  Service   The service we are updating bit information for
-
-  @retval TRUE  Parameters are valid
-  @retval FALSE Parameters are invalid
-
-**/
-STATIC
-BOOLEAN
-ValidParameters (
-  BOOLEAN             Destroy,
-  DIRECT_MSG_ARGS_EX  *Request,
-  NotifService        *Service
-  )
-{
-  /* Validate the incoming function parameters */
-  if ((Request == NULL) || (Service == NULL)) {
-    return FALSE;
-  }
-
-  /* Validate the setup and destroy parameters for the service. You must be setting/destroying at
-    * least one bit and you can't set more than the service supports. */
-  UINT8  NumBits = Request->Arg3;
-
-  if ((NumBits <= 0) || (NumBits > NOTIFICATION_MAX_IDS)) {
-    return FALSE;
-  }
-
-  UINTN  *Mappings = &Request->Arg4;
-
-  for (UINT8 i = 0; i < NumBits; i++) {
-    /* Validate that a user is not trying to setup an ID that has already been setup previously or
-      * attempting to destroy an ID that doesn't exist. */
-    UINT32  NotificationId = Mappings[i];
-    INT8    IdIndex        = IsMatchingId (NotificationId, Service);
-    if (!Destroy && (IdIndex != NOTIFICATION_ID_NOT_FOUND)) {
-      return FALSE;
-    } else if (Destroy && (IdIndex == NOTIFICATION_ID_NOT_FOUND)) {
-      return FALSE;
-    }
-
-    /* Validate that a user is not trying to set a bit that is already in use or destroy a bit
-      * they haven't previously set up. */
-    UINT32  BitmapBitNum = ((UINT64)Mappings[i] >> 32);
-    if (!Destroy && (GlobalBitmask & (1 << BitmapBitNum))) {
-      return FALSE;
-    } else if (Destroy && (Service->ServiceBits[IdIndex].BitNum != BitmapBitNum)) {
-      return FALSE;
-    }
-  }
-
-  return TRUE;
 }
 
 /**
@@ -144,56 +88,103 @@ UpdateServiceBits (
   NotifService        *Service
   )
 {
+  NotificationStatus  ReturnVal;
+  INT8                FoundIndex;
+  UINT8               IdIndex;
+  UINT8               NumBits;
+  UINTN               *Mappings;
+  UINT8               MappingIndex;
+  UINT32              NotificationId;
+  UINT32              BitmapBitNum;
+  BOOLEAN             EmptyFound;
+  NotifService        TempService;
+  UINT64              TempBitmask;
+
   /* Validate the incoming function parameters */
   if ((Request == NULL) || (Service == NULL)) {
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
-  NotificationStatus  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-  UINT8               NumBits   = Request->Arg3;
+  NumBits  = Request->Arg3;
+  Mappings = &Request->Arg4;
+
+  /* You must be setting/destroying at least one bit and no more than the service supports */
+  if ((NumBits <= 0) || (NumBits > NOTIFICATION_MAX_IDS)) {
+    DEBUG ((DEBUG_ERROR, "Invalid NumBits: %x\n", NumBits));
+    return NOTIFICATION_STATUS_INVALID_PARAMETER;
+  }
+
+  ReturnVal = NOTIFICATION_STATUS_SUCCESS;
+
+  /* Copy the current service structure and global bitmask to the temporaries */
+  CopyMem(&TempService, Service, sizeof(NotifService));
+  TempBitmask = GlobalBitmask;
 
   /* Need to go through all of the setup bits and update the structure */
-  UINTN  *Mappings = &Request->Arg4;
-
-  for (UINT8 i = 0; i < NumBits; i++) {
-    UINT32  NotificationId = Mappings[i];
-    UINT32  BitmapBitNum   = (UINT64)Mappings[i] >> 32;
+  for (MappingIndex = 0; MappingIndex < NumBits; MappingIndex++) {
+    NotificationId = Mappings[MappingIndex];
+    BitmapBitNum   = (UINT64)Mappings[MappingIndex] >> 32;
+    FoundIndex     = IsMatchingId (NotificationId, &TempService);
 
     if (Destroy) {
       /* If we can not find the ID to destroy, it is an error */
-      INT8  Index = IsMatchingId (NotificationId, Service);
-      if (Index != NOTIFICATION_ID_NOT_FOUND) {
-        Service->ServiceBits[Index].BitNum = 0;
-        Service->ServiceBits[Index].IdNum  = 0;
-        Service->ServiceBits[Index].InUse  = FALSE;
-
-        /* Clear the global bitmask bit */
-        GlobalBitmask &= ~(1 << BitmapBitNum);
-        ReturnVal      = NOTIFICATION_STATUS_SUCCESS;
+      if (FoundIndex == NOTIFICATION_ID_NOT_FOUND) {
+        DEBUG ((DEBUG_ERROR, "Invalid Destroy ID: %x Not Found\n", NotificationId));
+        ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
+      /* If the bitmask bit is not set, it is an error */
+      } else if (!(GlobalBitmask & (1 << BitmapBitNum))) {
+        DEBUG ((DEBUG_ERROR, "Invalid Destroy Bitmap Bit: %x Not Set\n", BitmapBitNum));
+        ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
+      } else {
+        /* Clear the data */
+        TempService.ServiceBits[FoundIndex].BitNum = 0;
+        TempService.ServiceBits[FoundIndex].IdNum  = 0;
+        TempService.ServiceBits[FoundIndex].InUse  = FALSE;
+        TempBitmask &= ~(1 << BitmapBitNum);
       }
     } else {
-      /* Need to loop through the bits within the structure and find an empty location, if
-        * unable to, we ran out of room, return an error */
-      UINT8    Index;
-      BOOLEAN  EmptyFound = FALSE;
-      for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
-        if (!Service->ServiceBits[Index].InUse) {
-          EmptyFound = TRUE;
+      /* If we can find the ID to setup, it is an error */
+      if (FoundIndex != NOTIFICATION_ID_NOT_FOUND) {
+        DEBUG ((DEBUG_ERROR, "Invalid Setup ID: %x Found\n", NotificationId));
+        ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
+      /* If the bitmas bit is set, it is an error */
+      } else if (GlobalBitmask & (1 << BitmapBitNum)) {
+        DEBUG ((DEBUG_ERROR, "Invalid Setup Bitmap Bit: %x Set\n", BitmapBitNum));
+        ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
+      } else {
+        /* Need to loop through the bits within the structure and find an empty location */
+        EmptyFound = FALSE;
+        for (IdIndex = 0; IdIndex < NOTIFICATION_MAX_IDS; IdIndex++) {
+          if (!TempService.ServiceBits[IdIndex].InUse) {
+            EmptyFound = TRUE;
+            break;
+          }
+        }
+
+        /* If we can not find an empty space, it is an error */
+        if (!EmptyFound) {
+          DEBUG ((DEBUG_ERROR, "Setup Failed - No Memory Available\n"));
+          ReturnVal = NOTIFICATION_STATUS_NO_MEM;
           break;
+        } else {
+          /* Update the data */
+          TempService.ServiceBits[IdIndex].BitNum = BitmapBitNum;
+          TempService.ServiceBits[IdIndex].IdNum  = NotificationId;
+          TempService.ServiceBits[IdIndex].InUse  = TRUE;
+          TempBitmask |= (1 << BitmapBitNum);
         }
       }
-
-      /* If we can not find an empty space, it is an error */
-      if (EmptyFound) {
-        Service->ServiceBits[Index].BitNum = BitmapBitNum;
-        Service->ServiceBits[Index].IdNum  = NotificationId;
-        Service->ServiceBits[Index].InUse  = TRUE;
-
-        /* Set the global bitmask bit */
-        GlobalBitmask |= (1 << BitmapBitNum);
-        ReturnVal      = NOTIFICATION_STATUS_SUCCESS;
-      }
     }
+  }
+
+  /* Copy the temporaries back if everything was successful */
+  if (ReturnVal == NOTIFICATION_STATUS_SUCCESS) {
+    CopyMem(Service, &TempService, sizeof(NotifService));
+    GlobalBitmask = TempBitmask;
   }
 
   return ReturnVal;
@@ -220,17 +211,22 @@ QueryHandler (
   DEBUG ((DEBUG_ERROR, "Notification Service Query Unsupported\n"));
   return NOTIFICATION_STATUS_GENERIC_ERROR;
 
-  NotifService        *Service  = NULL;
-  UINT8               Uuid[16]  = { 0 };
-  NotificationStatus  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+  UINT8               Index;
+  UINT8               NumIds;
+  NotifService        *Service;
+  UINT8               Uuid[16];
+  NotificationStatus  ReturnVal;
+
+  Service   = NULL;
+  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
   /* Extract the UUID from the message */
   NotificationServiceExtractUuid (Request, Uuid);
 
   /* Attempt to find the UUID within our list */
-  for (UINT8 i = 0; i < NOTIFICATION_MAX_SERVICES; i++) {
-    if (!CompareMem (Uuid, NotificationServices[i].ServiceUuid, sizeof (Uuid))) {
-      Service = &NotificationServices[i];
+  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+    if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
+      Service = &NotificationServices[Index];
       break;
     }
   }
@@ -238,9 +234,9 @@ QueryHandler (
   /* Check for a valid UUID */
   if (Service != NULL) {
     /* Count the number of IDs that are in use */
-    UINT8  NumIds = 0;
-    for (UINT8 i = 0; i < NOTIFICATION_MAX_IDS; i++) {
-      if (Service->ServiceBits[NumIds].InUse) {
+    NumIds = 0;
+    for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
+      if (Service->ServiceBits[Index].InUse) {
         NumIds++;
       }
     }
@@ -248,7 +244,7 @@ QueryHandler (
     Response->Arg1 = NumIds;
     ReturnVal      = NOTIFICATION_STATUS_SUCCESS;
   } else {
-    DEBUG ((DEBUG_ERROR, "Invalid Notification Service UUID\n"));
+    DEBUG ((DEBUG_ERROR, "Service Query Failed - Error Code: %x\n", ReturnVal));
   }
 
   Response->Arg0 = ReturnVal;
@@ -272,9 +268,13 @@ SetupHandler (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
-  NotifService        *Service  = NULL;
-  UINT8               Uuid[16]  = { 0 };
-  NotificationStatus  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+  UINT8               Index;
+  NotifService        *Service;
+  UINT8               Uuid[16];
+  NotificationStatus  ReturnVal;
+
+  Service   = NULL;
+  ReturnVal = NOTIFICATION_STATUS_NO_MEM;
 
   /* Extract the UUID from the message */
   NotificationServiceExtractUuid (Request, Uuid);
@@ -287,18 +287,18 @@ SetupHandler (
   }
 
   /* Attempt to find the UUID within our list */
-  for (UINT8 i = 0; i < NOTIFICATION_MAX_SERVICES; i++) {
-    if (!CompareMem (Uuid, NotificationServices[i].ServiceUuid, sizeof (Uuid))) {
-      Service = &NotificationServices[i];
+  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+    if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
+      Service = &NotificationServices[Index];
       break;
     }
   }
 
   /* The UUID was not found in the list, attempt to find an empty location to add it */
   if (Service == NULL) {
-    for (UINT8 i = 0; i < NOTIFICATION_MAX_SERVICES; i++) {
-      if (!NotificationServices[i].InUse) {
-        Service = &NotificationServices[i];
+    for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+      if (!NotificationServices[Index].InUse) {
+        Service = &NotificationServices[Index];
         CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
         Service->InUse = TRUE;
         break;
@@ -307,12 +307,10 @@ SetupHandler (
   }
 
   /* Check for a valid UUID and validate the input parameters */
-  if ((Service != NULL) && (ValidParameters (FALSE, Request, Service))) {
+  if (Service != NULL) {
     ReturnVal = UpdateServiceBits (FALSE, Request, Service);
-  } else if (Service != NULL) {
-    DEBUG ((DEBUG_ERROR, "Invalid Parameters\n"));
   } else {
-    DEBUG ((DEBUG_ERROR, "Invalid Notification Service UUID\n"));
+    DEBUG ((DEBUG_ERROR, "Service Setup Failed - Error Code: %x\n", ReturnVal));
   }
 
   Response->Arg0 = ReturnVal;
@@ -336,28 +334,30 @@ DestroyHandler (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
-  NotifService        *Service  = NULL;
-  UINT8               Uuid[16]  = { 0 };
-  NotificationStatus  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+  UINT8               Index;
+  NotifService        *Service;
+  UINT8               Uuid[16];
+  NotificationStatus  ReturnVal;
+
+  Service  = NULL;
+  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
   /* Extract the UUID from the message */
   NotificationServiceExtractUuid (Request, Uuid);
 
   /* Attempt to find the UUID within our list */
-  for (UINT8 i = 0; i < NOTIFICATION_MAX_SERVICES; i++) {
-    if (!CompareMem (Uuid, NotificationServices[i].ServiceUuid, sizeof (Uuid))) {
-      Service = &NotificationServices[i];
+  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+    if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
+      Service = &NotificationServices[Index];
       break;
     }
   }
 
   /* Check for a valid UUID and validate the input parameters */
-  if ((Service != NULL) && (ValidParameters (TRUE, Request, Service))) {
+  if (Service != NULL) {
     ReturnVal = UpdateServiceBits (TRUE, Request, Service);
-  } else if (Service != NULL) {
-    DEBUG ((DEBUG_ERROR, "Invalid Parameters\n"));
   } else {
-    DEBUG ((DEBUG_ERROR, "Invalid Notification Service UUID\n"));
+    DEBUG ((DEBUG_ERROR, "Service Destroy Failed - Error Code: %x\n", ReturnVal));
   }
 
   Response->Arg0 = ReturnVal;
@@ -373,7 +373,17 @@ NotificationServiceInit (
   VOID
   )
 {
-  /* Nothing to Init */
+  UINT8 Index;
+
+  /* Initialize Global Values */
+  IdsAcquired   = FALSE;
+  SourceId      = 0;
+  DestinationId = 0;
+  GlobalBitmask = 0;
+
+  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+    SetMem(&NotificationServices[Index], sizeof(NotifService), 0);
+  }
 }
 
 /**
@@ -401,12 +411,14 @@ NotificationServiceHandle (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
+  UINT64  Opcode;
+
   /* Validate the input parameters before attempting to dereference or pass them along */
   if ((Request == NULL) || (Response == NULL)) {
     return;
   }
 
-  UINT64  Opcode = Request->Arg0;
+  Opcode = Request->Arg0;
 
   switch (Opcode) {
     case NOTIFICATION_OPCODE_QUERY:
@@ -447,18 +459,24 @@ NotificationServiceIdSet (
   UINT32  Flag
   )
 {
+  NotifService        *Service;
+  NotificationStatus  ReturnVal;
+  UINT8               Index;
+  UINT64              Bitmask;
+  EFI_STATUS          Status;
+
   /* Validate the incoming function parameters */
   if (ServiceUuid == NULL) {
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
-  NotifService        *Service  = NULL;
-  NotificationStatus  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+  Service   = NULL;
+  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
   /* Attempt to find the UUID within our list */
-  for (UINT8 i = 0; i < NOTIFICATION_MAX_SERVICES; i++) {
-    if (!CompareMem (ServiceUuid, NotificationServices[i].ServiceUuid, sizeof (NotificationServices[i].ServiceUuid))) {
-      Service = &NotificationServices[i];
+  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+    if (!CompareMem (ServiceUuid, NotificationServices[Index].ServiceUuid, sizeof (NotificationServices[Index].ServiceUuid))) {
+      Service = &NotificationServices[Index];
       break;
     }
   }
@@ -466,10 +484,10 @@ NotificationServiceIdSet (
   /* UUID was found */
   if (Service != NULL) {
     /* Attempt to find the logical ID within the mapped list */
-    for (UINT8 i = 0; i < NOTIFICATION_MAX_IDS; i++) {
-      if (Service->ServiceBits[i].IdNum == Id) {
-        UINT64      Bitmask = (1 << Service->ServiceBits[i].BitNum);
-        EFI_STATUS  Status  = FfaNotificationSet (SourceId, Flag, Bitmask);
+    for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
+      if (Service->ServiceBits[Index].IdNum == Id) {
+        Bitmask = (1 << Service->ServiceBits[Index].BitNum);
+        Status  = FfaNotificationSet (SourceId, Flag, Bitmask);
         if (EFI_ERROR (Status)) {
           ReturnVal = NOTIFICATION_STATUS_GENERIC_ERROR;
         } else {
@@ -497,23 +515,29 @@ NotificationServiceExtractUuid (
   UINT8               *Uuid
   )
 {
+  UINT64  UuidLo;
+  UINT64  UuidHi;
+  UINT8   Index;
+  UINT8   UuidHiByte;
+  UINT8   UuidLoByte;
+
   /* Validate the incoming function parameters */
   if ((Request == NULL) || (Uuid == NULL)) {
     return;
   }
 
-  UINT64  UuidLo = Request->Arg1;
-  UINT64  UuidHi = Request->Arg2;
+  UuidLo = Request->Arg1;
+  UuidHi = Request->Arg2;
 
   /* Copy the upper 8 bytes */
-  for (UINT8 i = 0; i < 8; i++) {
-    UINT8  UuidHiByte = (UINT8)(UuidHi >> ((7 - i) * 8));
-    Uuid[i] = UuidHiByte;
+  for (Index = 0; Index < 8; Index++) {
+    UuidHiByte = (UINT8)(UuidHi >> ((7 - Index) * 8));
+    Uuid[Index] = UuidHiByte;
   }
 
   /* Copy the lower 8 bytes */
-  for (UINT8 i = 8; i < 16; i++) {
-    UINT8  UuidLoByte = (UINT8)(UuidLo >> ((15 - i) * 8));
-    Uuid[i] = UuidLoByte;
+  for (Index = 8; Index < 16; Index++) {
+    UuidLoByte = (UINT8)(UuidLo >> ((15 - Index) * 8));
+    Uuid[Index] = UuidLoByte;
   }
 }
