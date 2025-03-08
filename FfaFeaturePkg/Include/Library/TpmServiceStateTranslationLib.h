@@ -74,6 +74,20 @@ TpmSstLocalityRequest (
   );
 
 /**
+  Relinquish access to the given locality
+
+  @param  Locality  The locality to relinquish access to
+
+  @retval EFI_SUCCESS  Success
+  @retval EFI_TIMEOUT  Timeout
+
+**/
+EFI_STATUS
+TpmSstLocalityRelinquish (
+  UINT8  Locality
+  );
+
+/**
   Returns if IdleBypass is supported
 
   @retval TRUE   Supported

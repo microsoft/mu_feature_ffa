@@ -609,6 +609,50 @@ TpmSstLocalityRequest (
 }
 
 /**
+  Relinquish access to the given locality
+
+  @param  Locality  The locality to relinquish access to
+
+  @retval EFI_SUCCESS  Success
+  @retval EFI_TIMEOUT  Timeout
+
+**/
+EFI_STATUS
+TpmSstLocalityRelinquish (
+  UINT8  Locality
+  )
+{
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
+
+  /* Determine which TPM structure to access */
+  if (mIsCrbInterface) {
+    ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
+
+    MmioWrite32 ((UINTN)&ExternalCrb->LocalityControl, PTP_CRB_LOCALITY_CONTROL_RELINQUISH);
+    Status = WaitRegisterBits (
+               &ExternalCrb->LocalityStatus,
+               0,
+               PTP_CRB_LOCALITY_STATUS_GRANTED,
+               PTP_TIMEOUT_A
+               );
+  } else {
+    ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
+
+    MmioWrite8 ((UINTN)&ExternalFifo->Access, PTP_FIFO_ACC_ACTIVE);
+    Status = WaitRegisterBits (
+               (UINT32 *)&ExternalFifo->Access,
+               PTP_FIFO_VALID,
+               PTP_FIFO_ACC_ACTIVE,
+               PTP_TIMEOUT_A
+               );
+  }
+
+  return Status;
+}
+
+/**
   Returns if IdleBypass is supported
 
   @retval TRUE   Supported
