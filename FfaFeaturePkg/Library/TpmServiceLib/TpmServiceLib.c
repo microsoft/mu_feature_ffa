@@ -348,7 +348,7 @@ HandleLocalityRequest (
     return TPM2_FFA_ERROR_DENIED;
   }
 
-  /* Check if we are doing a locality request or relinquish */
+  /* Check if we are doing a locality relinquish */
   if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_RELINQUISH) {
     /* Make sure the locality being relinquished is the active locality */
     if (Locality != mActiveLocality) {
@@ -359,10 +359,15 @@ HandleLocalityRequest (
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Relinquish\n", Locality));
     Status = TpmSstLocalityRelinquish (Locality);
     ActiveLocality = NUM_LOCALITIES; // Invalid
-  } else {
+  /* Check if we are doing a locality request */
+  } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Request\n", Locality));
     Status = TpmSstLocalityRequest (Locality);
     ActiveLocality = Locality;
+  /* Otherwise, the host didn't set the correct bits, invalid */
+  } else {
+    DEBUG ((DEBUG_ERROR, "Request/Relinquish Bit Not Set\n"));
+    return TPM2_FFA_ERROR_DENIED;
   }
 
   /* Update the internal TPM CRB */
