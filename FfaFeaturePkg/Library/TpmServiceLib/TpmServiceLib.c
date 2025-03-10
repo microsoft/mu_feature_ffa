@@ -43,12 +43,20 @@ typedef enum {
   NUM_TPM_STATES
 } TpmState;
 
+/* TPM Locality States */
+typedef enum {
+  TPM_LOCALITY_CLOSED = 0,
+  TPM_LOCALITY_OPEN,
+  NUM_LOCALITY_STATES
+} TpmLocalityState;
+
 typedef UINTN TpmStatus;
 
 /* TPM Service Variables */
 STATIC TpmState                      mCurrentState;
 STATIC UINT8                         mActiveLocality;
 STATIC PTP_CRB_INTERFACE_IDENTIFIER  mInterfaceIdDefault;
+STATIC TpmLocalityState              mLocalityStates[NUM_LOCALITIES];
 
 /**
   Converts the passed in EFI_STATUS to a TPM_STATUS
@@ -107,7 +115,6 @@ InitInternalCrb (
   InternalTpmCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmInternalBaseAddress) + (Locality * TPM_LOCALITY_OFFSET));
   DEBUG ((DEBUG_INFO, "Locality: %x - InternalTpmCrb Address: %lx\n", Locality, (UINTN)InternalTpmCrb));
   SetMem ((void *)InternalTpmCrb, sizeof (PTP_CRB_REGISTERS), 0x00);
-  InternalTpmCrb->LocalityState    = PTP_CRB_LOCALITY_STATE_TPM_ESTABLISHED;
   InternalTpmCrb->InterfaceId      = mInterfaceIdDefault.Uint32;
   InternalTpmCrb->CrbControlStatus = PTP_CRB_CONTROL_AREA_STATUS_TPM_IDLE;
 }
@@ -134,7 +141,6 @@ CleanInternalCrb (
   InternalTpmCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmInternalBaseAddress) + (mActiveLocality * TPM_LOCALITY_OFFSET));
 
   /* Set the locality state based on the active locality. */
-  InternalTpmCrb->LocalityState = PTP_CRB_LOCALITY_STATE_TPM_ESTABLISHED;
   switch (mActiveLocality) {
     case 0:
       InternalTpmCrb->LocalityState |= PTP_CRB_LOCALITY_STATE_ACTIVE_LOCALITY_0;
@@ -330,16 +336,44 @@ HandleLocalityRequest (
   UINT8  Locality
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS             Status;
+  PTP_CRB_REGISTERS_PTR  InternalTpmCrb;
+  UINT8                  ActiveLocality;
 
-  /* Request to use the TPM */
-  DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Request\n", Locality));
-  Status = TpmSstLocalityRequest (Locality);
+  InternalTpmCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmInternalBaseAddress) + (Locality * TPM_LOCALITY_OFFSET));
+
+  /* Check if the locality is open */
+  if (mLocalityStates[Locality] == TPM_LOCALITY_CLOSED) {
+    DEBUG ((DEBUG_ERROR, "Locality Closed\n"));
+    return TPM2_FFA_ERROR_DENIED;
+  }
+
+  /* Check if we are doing a locality relinquish */
+  if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_RELINQUISH) {
+    /* Make sure the locality being relinquished is the active locality */
+    if (Locality != mActiveLocality) {
+      DEBUG ((DEBUG_ERROR, "Locality Relinquish Failed - Invalid Locality\n"));
+      return TPM2_FFA_ERROR_DENIED;
+    }
+
+    DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Relinquish\n", Locality));
+    Status = TpmSstLocalityRelinquish (Locality);
+    ActiveLocality = NUM_LOCALITIES; // Invalid
+  /* Check if we are doing a locality request */
+  } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
+    DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Request\n", Locality));
+    Status = TpmSstLocalityRequest (Locality);
+    ActiveLocality = Locality;
+  /* Otherwise, the host didn't set the correct bits, invalid */
+  } else {
+    DEBUG ((DEBUG_ERROR, "Request/Relinquish Bit Not Set\n"));
+    return TPM2_FFA_ERROR_DENIED;
+  }
 
   /* Update the internal TPM CRB */
   if (Status == EFI_SUCCESS) {
     InitInternalCrb (Locality);
-    mActiveLocality = Locality;
+    mActiveLocality = ActiveLocality;
   } else {
     DEBUG ((DEBUG_ERROR, "Locality Request Failed w/ Status: %x\n", Status));
   }
@@ -549,6 +583,11 @@ TpmServiceInit (
   /* Initializes all of the localities. */
   for (Locality = 0; Locality < NUM_LOCALITIES; Locality++) {
     InitInternalCrb (Locality);
+  }
+
+  /* TODO: Request Locality states from TFA */
+  for (Locality = 0; Locality < NUM_LOCALITIES; Locality++) {
+    mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
   }
 
   /* Initialize the TPM Service State Translation Library. */
