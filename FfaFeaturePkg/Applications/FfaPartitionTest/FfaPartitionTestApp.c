@@ -312,6 +312,60 @@ FfaPartitionTestAppEntry (
     DEBUG ((DEBUG_INFO, "TPM Service Interface Version: %d.%d\n", DirectMsgArgsEx.Arg1 >> 16, DirectMsgArgsEx.Arg1 & 0xFFFF));
   }
 
+  // Call the TPM Service to close locality0
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  DirectMsgArgsEx.Arg0 = 0x0F000201;
+  DirectMsgArgsEx.Arg1 = 0x101; // Close Locality
+  DirectMsgArgsEx.Arg2 = 0x00;  // Locality Qualifier
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg0 != 0x05000001) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "TPM Service Close Locality Success\n"));
+  }
+
+  // Call the TPM Service to request locality0
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  DirectMsgArgsEx.Arg0 = 0x0F000201;
+  DirectMsgArgsEx.Arg1 = 0x01; // Request Locality
+  DirectMsgArgsEx.Arg2 = 0x00; // Locality Qualifier
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg0 != 0x8E00000A) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "TPM Service Rejected Request, Locality Closed\n"));
+  }
+
+  // Call the TPM Service to reopen locality0
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  DirectMsgArgsEx.Arg0 = 0x0F000201;
+  DirectMsgArgsEx.Arg1 = 0x100; // Open Locality
+  DirectMsgArgsEx.Arg2 = 0x00;  // Locality Qualifier
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg0 != 0x05000001) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "TPM Service Open Locality Success\n"));
+  }
+
  #endif
 
   // Invoke the Test Service to trigger a notification event

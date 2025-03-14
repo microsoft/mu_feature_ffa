@@ -152,14 +152,6 @@ CopyCommandData (
       MmioWrite8 ((UINTN)&ExternalCrb->CrbDataBuffer[Index], TpmCommandBuffer[Index]);
     }
 
-    /* Setup the CRB buffer addresses and sizes. */
-    MmioWrite32 ((UINTN)&ExternalCrb->CrbControlCommandAddressHigh, (UINT32)RShiftU64 ((UINTN)ExternalCrb->CrbDataBuffer, 32));
-    MmioWrite32 ((UINTN)&ExternalCrb->CrbControlCommandAddressLow, (UINT32)(UINTN)ExternalCrb->CrbDataBuffer);
-    MmioWrite32 ((UINTN)&ExternalCrb->CrbControlCommandSize, sizeof (ExternalCrb->CrbDataBuffer));
-
-    MmioWrite64 ((UINTN)&ExternalCrb->CrbControlResponseAddrss, (UINT32)(UINTN)ExternalCrb->CrbDataBuffer);
-    MmioWrite32 ((UINTN)&ExternalCrb->CrbControlResponseSize, sizeof (ExternalCrb->CrbDataBuffer));
-
     Status = EFI_SUCCESS;
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
@@ -238,90 +230,6 @@ StartCommand (
 }
 
 /**
-  Retrieves the response header
-
-  @param  Locality          The locality to read from
-  @param  TpmCommandBuffer  The TPM command buffer to populate
-  @param  ResponseDataLen   The length of the response
-
-  @retval EFI_SUCCESS           Success
-  @retval EFI_TIMEOUT           Timeout
-  @retval EFI_UNSUPPORTED       Unsupported command type
-  @retval EFI_BUFFER_TOO_SMALL  Response buffer too small
-
-**/
-STATIC
-EFI_STATUS
-GetResponseHeader (
-  UINT8   Locality,
-  UINT8   *TpmCommandBuffer,
-  UINT32  *ResponseDataLen
-  )
-{
-  EFI_STATUS              Status;
-  PTP_CRB_REGISTERS_PTR   ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
-  UINT32                  Index;
-  UINT16                  BurstCount;
-  UINT32                  TpmOutSize;
-  UINT16                  Data16;
-  UINT32                  Data32;
-
-  /* Determine which TPM structure to access */
-  if (mIsCrbInterface) {
-    ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-
-    for (Index = 0; Index < sizeof (TPM2_RESPONSE_HEADER); Index++) {
-      TpmCommandBuffer[Index] = MmioRead8 ((UINTN)&ExternalCrb->CrbDataBuffer[Index]);
-    }
-
-    Status = EFI_SUCCESS;
-  } else {
-    ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-
-    Index      = 0;
-    BurstCount = 0;
-    while (Index < sizeof (TPM2_RESPONSE_HEADER)) {
-      Status = FifoReadBurstCount (ExternalFifo, &BurstCount);
-      if (EFI_ERROR (Status)) {
-        goto Exit;
-      }
-
-      while (BurstCount > 0) {
-        TpmCommandBuffer[Index] = MmioRead8 ((UINTN)&ExternalFifo->DataFifo);
-        Index++;
-        BurstCount--;
-        if (Index == sizeof (TPM2_RESPONSE_HEADER)) {
-          Status = EFI_SUCCESS;
-          break;
-        }
-      }
-    }
-  }
-
-  /* TPM2 should not use RSP_COMMAND. */
-  CopyMem (&Data16, TpmCommandBuffer, sizeof (UINT16));
-  if (SwapBytes16 (Data16) == TPM_ST_RSP_COMMAND) {
-    DEBUG ((DEBUG_ERROR, "TPM2: TPM_ST_RSP error - %x\n", TPM_ST_RSP_COMMAND));
-    Status = EFI_UNSUPPORTED;
-    goto Exit;
-  }
-
-  CopyMem (&Data32, (TpmCommandBuffer + 2), sizeof (UINT32));
-  TpmOutSize = SwapBytes32 (Data32);
-  if (*ResponseDataLen < TpmOutSize) {
-    Status = EFI_BUFFER_TOO_SMALL;
-    goto Exit;
-  }
-
-  *ResponseDataLen = TpmOutSize;
-
-Exit:
-
-  return Status;
-}
-
-/**
   Retrieves the response data
 
   @param  Locality          The locality to read from
@@ -350,7 +258,7 @@ CopyResponseData (
   if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
-    for (Index = sizeof (TPM2_RESPONSE_HEADER); Index < ResponseDataLen; Index++) {
+    for (Index = 0; Index < ResponseDataLen; Index++) {
       TpmCommandBuffer[Index] = MmioRead8 ((UINTN)&ExternalCrb->CrbDataBuffer[Index]);
     }
 
@@ -358,7 +266,7 @@ CopyResponseData (
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
-    Index = sizeof (TPM2_RESPONSE_HEADER);
+    Index = 0;
     while (Index < ResponseDataLen) {
       Status = FifoReadBurstCount (ExternalFifo, &BurstCount);
       if (EFI_ERROR (Status)) {
@@ -537,12 +445,6 @@ TpmSstStart (
 
   /* Start command execution. */
   Status = StartCommand (Locality);
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
-  /* Get the response header. */
-  Status = GetResponseHeader (Locality, TpmCommandBuffer, &ResponseDataLen);
   if (EFI_ERROR (Status)) {
     goto Exit;
   }

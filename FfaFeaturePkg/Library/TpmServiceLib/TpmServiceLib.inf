@@ -26,6 +26,8 @@
   FfaFeaturePkg/FfaFeaturePkg.dec
 
 [LibraryClasses]
+  BaseLib
+  BaseMemoryLib
   DebugLib
   PlatformFfaInterruptLib
   ArmSvcLib
