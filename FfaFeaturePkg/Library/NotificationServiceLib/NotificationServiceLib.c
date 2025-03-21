@@ -28,13 +28,13 @@ typedef struct {
   UINT32     Cookie;  // SW defined value
   UINT16     Id;      // Global bitmask value
   BOOLEAN    PerVcpu; // Notification flag
+  UINT16     SourceId;
   BOOLEAN    InUse;
 } NotifInfo;
 
 typedef struct {
   UINT8        ServiceUuid[16];
   NotifInfo    ServiceInfo[NOTIFICATION_MAX_MAPPINGS];
-  UINT16       SourceId;
   BOOLEAN      InUse;
 } NotifService;
 
@@ -150,13 +150,22 @@ UpdateServiceInfo (
           Service->ServiceInfo[FoundIndex].Id
           ));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        /* If the Source IDs do not match, it is an error */
+      } else if (Service->ServiceInfo[FoundIndex].SourceId != Request->SourceId) {
+        DEBUG ((
+          DEBUG_ERROR,
+          "Invalid Unregister - Source ID: %x Mismatch\n",
+          Service->ServiceInfo[FoundIndex].SourceId
+          ));
+        ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
         /* Otherwise, clear the data */
       } else {
-        Service->ServiceInfo[FoundIndex].Cookie  = 0;
-        Service->ServiceInfo[FoundIndex].Id      = 0;
-        Service->ServiceInfo[FoundIndex].InUse   = FALSE;
-        Service->ServiceInfo[FoundIndex].PerVcpu = FALSE;
-        GlobalBitmask                           &= ~(1 << MappingId);
+        Service->ServiceInfo[FoundIndex].Cookie   = 0;
+        Service->ServiceInfo[FoundIndex].Id       = 0;
+        Service->ServiceInfo[FoundIndex].InUse    = FALSE;
+        Service->ServiceInfo[FoundIndex].PerVcpu  = FALSE;
+        Service->ServiceInfo[FoundIndex].SourceId = 0;
+        GlobalBitmask                            &= ~(1 << MappingId);
       }
 
       /* Otherwise, we are doing a register */
@@ -186,11 +195,12 @@ UpdateServiceInfo (
           ReturnVal = NOTIFICATION_STATUS_NO_MEM;
           /* Otherwise, update the data */
         } else {
-          Service->ServiceInfo[EmptyIndex].Cookie  = Cookie;
-          Service->ServiceInfo[EmptyIndex].Id      = MappingId;
-          Service->ServiceInfo[EmptyIndex].InUse   = TRUE;
-          Service->ServiceInfo[EmptyIndex].PerVcpu = (PerVcpu) ? TRUE : FALSE;
-          GlobalBitmask                           |= (1 << MappingId);
+          Service->ServiceInfo[EmptyIndex].Cookie   = Cookie;
+          Service->ServiceInfo[EmptyIndex].Id       = MappingId;
+          Service->ServiceInfo[EmptyIndex].InUse    = TRUE;
+          Service->ServiceInfo[EmptyIndex].PerVcpu  = (PerVcpu) ? TRUE : FALSE;
+          Service->ServiceInfo[EmptyIndex].SourceId = Request->SourceId;
+          GlobalBitmask                            |= (1 << MappingId);
         }
       }
     }
@@ -270,8 +280,7 @@ RegisterHandler (
     {
       /* Update the UUID and set the location to InUse */
       CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
-      Service->InUse    = TRUE;
-      Service->SourceId = Request->SourceId;
+      Service->InUse = TRUE;
     }
   } else {
     DEBUG ((DEBUG_ERROR, "Service Register Failed - Error Code: %d\n", ReturnVal));
@@ -476,7 +485,7 @@ NotificationServiceIdSet (
         Bitmask = (1 << Service->ServiceInfo[Index].Id);
         /* TODO: Figure out how we are going to do PerVcpu setup */
         // Flag |= (Service->ServiceInfo[Index].PerVcpu);
-        Status = FfaNotificationSet (Service->SourceId, Flag, Bitmask);
+        Status = FfaNotificationSet (Service->ServiceInfo[Index].SourceId, Flag, Bitmask);
         if (!EFI_ERROR (Status)) {
           ReturnVal = NOTIFICATION_STATUS_SUCCESS;
         }
