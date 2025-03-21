@@ -28,24 +28,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Guid/NotificationServiceFfa.h>
+#include <Guid/TestServiceFfa.h>
+#include <Guid/Tpm2ServiceFfa.h>
 
-#define FFA_NOTIFICATION_SERVICE_GUID \
-  { \
-    0xb510b3a3, 0x59f6, 0x4054, { 0xba, 0x7a, 0xff, 0x2e, 0xb1, 0xea, 0xc7, 0x65 } \
-  }
-
-#define FFA_TPM_SERVICE_GUID \
-  { \
-    0x17b862a4, 0x1806, 0x4faf, { 0x86, 0xb3, 0x08, 0x9a, 0x58, 0x35, 0x38, 0x61 } \
-  }
-
-#define FFA_TEST_SERVICE_GUID \
-  { \
-    0xe0fad9b3, 0x7f5c, 0x42c5, { 0xb2, 0xee, 0xb7, 0xa8, 0x23, 0x13, 0xcd, 0xb2 } \
-  }
-
-UINT16  FfaPartId;
-
+UINT16                           FfaPartId;
 EFI_HARDWARE_INTERRUPT_PROTOCOL  *gInterrupt;
 
 /**
@@ -100,14 +87,8 @@ FfaPartitionTestAppEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS    Status;
-  ARM_SMC_ARGS  SmcArgs                    = { 0 };
-  EFI_GUID      FfaTestServiceGuid         = FFA_TEST_SERVICE_GUID;
-  EFI_GUID      FfaNotificationServiceGuid = FFA_NOTIFICATION_SERVICE_GUID;
-
- #ifdef TPM2_ENABLE
-  EFI_GUID  FfaTpmServiceGuid = FFA_TPM_SERVICE_GUID;
- #endif
+  EFI_STATUS              Status;
+  ARM_SMC_ARGS            SmcArgs;
   EFI_FFA_PART_INFO_DESC  FfaTestPartInfo;
   UINT32                  Count;
   UINT32                  Size;
@@ -116,6 +97,11 @@ FfaPartitionTestAppEntry (
   DIRECT_MSG_ARGS_EX      DirectMsgArgsEx;
   UINT16                  CurrentMajorVersion;
   UINT16                  CurrentMinorVersion;
+  NotificationMapping     Mapping;
+  NotificationMapping     *MappingPtr;
+  UINT8                   NumMappings;
+  UINT8                   Index;
+  UINT16                  BindBitPos;
 
   // Query FF-A version to make sure FF-A is supported
   Status = ArmFfaLibGetVersion (
@@ -170,7 +156,7 @@ FfaPartitionTestAppEntry (
 
   // Discover the Ffa test SP after converting the EFI_GUID to a format TF-A will
   // understand.
-  Status = ArmFfaLibPartitionInfoGet (&FfaTestServiceGuid, 0, &Count, &Size);
+  Status = ArmFfaLibPartitionInfoGet (&gEfiTestServiceFfaGuid, 0, &Count, &Size);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to discover FF-A test SP (%r).\n", Status));
     goto Done;
@@ -210,7 +196,7 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  DEBUG ((DEBUG_ERROR, "Received feature SRI number with FF-A Ffa test SP (%d).\n", SriIndex));
+  DEBUG ((DEBUG_INFO, "Received feature SRI number with FF-A Ffa test SP (%d).\n", SriIndex));
 
   // Register the IRQ handler for the FF-A Ffa test SP
   Status = gBS->LocateProtocol (&gHardwareInterruptProtocolGuid, NULL, (VOID **)&gInterrupt);
@@ -223,89 +209,391 @@ FfaPartitionTestAppEntry (
   }
 
   // Then register this test app to receive notifications from the Ffa test SP
-  FfaNotificationBind (FfaTestPartInfo.PartitionId, 0, 0x4);
+  BindBitPos = 0x02;
+  FfaNotificationBind (FfaTestPartInfo.PartitionId, 0, (1 << BindBitPos));
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to bind notification with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  // Setup the Thermal Service Notification Bits
+  DEBUG ((DEBUG_INFO, "Binding Bit%x - Value: %x Successful.\n", BindBitPos, (1 << BindBitPos)));
+
+  // Register the Battery Service Notification Mappings
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x05;
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x01; // Setup
-  DirectMsgArgsEx.Arg1 = 0xba7aff2eb1eac765;
-  DirectMsgArgsEx.Arg2 = 0xb610b3a359f64054;
-  DirectMsgArgsEx.Arg3 = 0x03;
-  DirectMsgArgsEx.Arg4 = (((UINT64)6 << 32) | (0));
-  DirectMsgArgsEx.Arg5 = (((UINT64)7 << 32) | (1));
-  DirectMsgArgsEx.Arg6 = (((UINT64)8 << 32) | (2));
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaNotificationServiceGuid, &DirectMsgArgsEx);
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb710b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 0;
+  Mapping.Bits.Id      = 0;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie  = 1;
+  Mapping.Bits.Id      = 1;
+  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie   = 2;
+  Mapping.Bits.Id       = 2;
+  DirectMsgArgsEx.Arg10 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie   = 3;
+  Mapping.Bits.Id       = 3;
+  DirectMsgArgsEx.Arg11 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie   = 4;
+  Mapping.Bits.Id       = 4;
+  DirectMsgArgsEx.Arg12 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0) {
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
-    DEBUG ((DEBUG_INFO, "Thermal Service Setup Success\n"));
+    DEBUG ((DEBUG_INFO, "Battery Service Register Success\n"));
   }
 
-  // Setup the Battery Service Notification Bits
+  // Register the Thermal Service Notification Mappings
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x03;
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x01; // Setup
-  DirectMsgArgsEx.Arg1 = 0xba7aff2eb1eac765;
-  DirectMsgArgsEx.Arg2 = 0xb710b3a359f64054;
-  DirectMsgArgsEx.Arg3 = 0x05;
-  DirectMsgArgsEx.Arg4 = (((UINT64)1 << 32) | (0));
-  DirectMsgArgsEx.Arg5 = (((UINT64)2 << 32) | (1));
-  DirectMsgArgsEx.Arg6 = (((UINT64)3 << 32) | (2));
-  DirectMsgArgsEx.Arg7 = (((UINT64)4 << 32) | (3));
-  DirectMsgArgsEx.Arg8 = (((UINT64)5 << 32) | (4));
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaNotificationServiceGuid, &DirectMsgArgsEx);
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 0;
+  Mapping.Bits.Id      = 5;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie  = 1;
+  Mapping.Bits.Id      = 6;
+  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie   = 2;
+  Mapping.Bits.Id       = 7;
+  DirectMsgArgsEx.Arg10 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0) {
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
-    DEBUG ((DEBUG_INFO, "Battery Service Setup Success\n"));
+    DEBUG ((DEBUG_INFO, "Thermal Service Register Success\n"));
   }
 
-  // Destroy the Thermal Service Notification Bit 1
+  // Register the Thermal Service Notification Mapping Duplicate Cookie - Invalid
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x02;
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x02; // Destroy
-  DirectMsgArgsEx.Arg1 = 0xba7aff2eb1eac765;
-  DirectMsgArgsEx.Arg2 = 0xb610b3a359f64054;
-  DirectMsgArgsEx.Arg3 = 0x01;
-  DirectMsgArgsEx.Arg4 = (((UINT64)7 << 32) | (1));
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaNotificationServiceGuid, &DirectMsgArgsEx);
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 3;
+  Mapping.Bits.Id      = 8;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie  = 3;
+  Mapping.Bits.Id      = 9;
+  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0) {
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_PARTIAL) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
-    DEBUG ((DEBUG_INFO, "Thermal Service Destroy Success\n"));
+    MappingPtr = (NotificationMapping *)&DirectMsgArgsEx.Arg8;
+    for (Index = 0; Index < DirectMsgArgsEx.Arg7; Index++) {
+      DEBUG ((
+        DEBUG_INFO,
+        "Mapping Error: %d, Cookie - %x, ID - %x\n",
+        (INT8)MappingPtr[Index].Bits.ErrorCode,
+        MappingPtr[Index].Bits.Cookie,
+        MappingPtr[Index].Bits.Id
+        ));
+    }
+
+    DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Duplicate Cookie Partial Success\n"));
+  }
+
+  // Register the Thermal Service Notification Mapping Duplicate ID - Invalid
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x02;
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 4;
+  Mapping.Bits.Id      = 9;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Mapping.Bits.Cookie  = 5;
+  Mapping.Bits.Id      = 9;
+  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_PARTIAL) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    MappingPtr = (NotificationMapping *)&DirectMsgArgsEx.Arg8;
+    for (Index = 0; Index < DirectMsgArgsEx.Arg7; Index++) {
+      DEBUG ((
+        DEBUG_INFO,
+        "Mapping Error: %d, Cookie - %x, ID - %x\n",
+        (INT8)MappingPtr[Index].Bits.ErrorCode,
+        MappingPtr[Index].Bits.Cookie,
+        MappingPtr[Index].Bits.Id
+        ));
+    }
+
+    DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Duplicate ID Partial Success\n"));
+  }
+
+  // Register the Thermal Service Notification Invalid Mapping Count Min Value
+  Mapping.Uint64 = 0;
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = 0x00; // Invalid
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Mapping Count MIN Success\n"));
+  }
+
+  // Register the Thermal Service Notification Invalid Mapping Count Max Value
+  Mapping.Uint64 = 0;
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = 0x7; // Invalid
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Mapping Count MAX Success\n"));
+  }
+
+  // Unregister the Thermal Service Notification Mapping Cookie1
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x01;
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 1;
+  Mapping.Bits.Id      = 6;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "Thermal Service Unregister Success\n"));
+  }
+
+  // Unregister the Thermal Service Notification Mapping Cookie1 - Invalid
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x01;
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 1;
+  Mapping.Bits.Id      = 6;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_PARTIAL) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    MappingPtr = (NotificationMapping *)&DirectMsgArgsEx.Arg8;
+    for (Index = 0; Index < DirectMsgArgsEx.Arg7; Index++) {
+      DEBUG ((
+        DEBUG_INFO,
+        "Mapping Error: %d, Cookie - %x, ID - %x\n",
+        (INT8)MappingPtr[Index].Bits.ErrorCode,
+        MappingPtr[Index].Bits.Cookie,
+        MappingPtr[Index].Bits.Id
+        ));
+    }
+
+    DEBUG ((DEBUG_INFO, "Thermal Service Unregister Invalid Cookie Success\n"));
+  }
+
+  // Unregister the Thermal Service Notification Mapping Cookie/ID Mismatch - Invalid
+  Mapping.Uint64 = 0;
+  NumMappings    = 0x01;
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  DirectMsgArgsEx.Arg7 = NumMappings;
+  DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
+  Mapping.Bits.Cookie  = 0;
+  Mapping.Bits.Id      = 0;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_PARTIAL) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    MappingPtr = (NotificationMapping *)&DirectMsgArgsEx.Arg8;
+    for (Index = 0; Index < DirectMsgArgsEx.Arg7; Index++) {
+      DEBUG ((
+        DEBUG_INFO,
+        "Mapping Error: %d, Cookie - %x, ID - %x\n",
+        (INT8)MappingPtr[Index].Bits.ErrorCode,
+        MappingPtr[Index].Bits.Cookie,
+        MappingPtr[Index].Bits.Id
+        ));
+    }
+
+    DEBUG ((DEBUG_INFO, "Thermal Service Unregister Invalid Cookie/ID Mismatch Success\n"));
+  }
+
+  // Unregister Invalid Service UUID
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  /* Set the receiver service UUID */
+  /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
+  /* Do not set UUID in x7-x8 (i.e. Arg3-Arg4) - Invalid */
+  DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
+  /* x10 (i.e. Arg6) should be 0 */
+  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "Unregister Invalid Service UUID Success\n"));
+  }
+
+  // Test a Notification Event
+  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
+  DirectMsgArgsEx.Arg0 = TEST_OPCODE_TEST_NOTIFICATION;
+  DirectMsgArgsEx.Arg1 = 0xba7aff2eb1eac765;
+  DirectMsgArgsEx.Arg2 = 0xb710b3a359f64054; // Battery Service
+  /* IMPORTANT NOTE: Only bit 2 has been bound, test needs to match binding call */
+  DirectMsgArgsEx.Arg3 = 0x02; // Cookie2 = ID2 = BitPos2
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiTestServiceFfaGuid, &DirectMsgArgsEx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    goto Done;
+  }
+
+  if (DirectMsgArgsEx.Arg0 != TEST_STATUS_SUCCESS) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "Test Service Notification Event Success\n"));
   }
 
  #ifdef TPM2_ENABLE
   // Call the TPM Service get_interface_version
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x0F000001;
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  DirectMsgArgsEx.Arg0 = TPM2_FFA_GET_INTERFACE_VERSION;
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiTpm2ServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0x05000002) {
+  if (DirectMsgArgsEx.Arg0 != TPM2_FFA_SUCCESS_OK_RESULTS_RETURNED) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
@@ -314,16 +602,16 @@ FfaPartitionTestAppEntry (
 
   // Call the TPM Service to close locality0
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x0F000201;
+  DirectMsgArgsEx.Arg0 = TPM2_FFA_START;
   DirectMsgArgsEx.Arg1 = 0x101; // Close Locality
   DirectMsgArgsEx.Arg2 = 0x00;  // Locality Qualifier
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiTpm2ServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0x05000001) {
+  if (DirectMsgArgsEx.Arg0 != TPM2_FFA_SUCCESS_OK) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
@@ -332,16 +620,16 @@ FfaPartitionTestAppEntry (
 
   // Call the TPM Service to request locality0
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x0F000201;
-  DirectMsgArgsEx.Arg1 = 0x01; // Request Locality
+  DirectMsgArgsEx.Arg0 = TPM2_FFA_START;
+  DirectMsgArgsEx.Arg1 = TPM2_FFA_START_FUNC_QUALIFIER_LOCALITY;
   DirectMsgArgsEx.Arg2 = 0x00; // Locality Qualifier
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiTpm2ServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0x8E00000A) {
+  if (DirectMsgArgsEx.Arg0 != TPM2_FFA_ERROR_DENIED) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
@@ -350,16 +638,16 @@ FfaPartitionTestAppEntry (
 
   // Call the TPM Service to reopen locality0
   ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0x0F000201;
+  DirectMsgArgsEx.Arg0 = TPM2_FFA_START;
   DirectMsgArgsEx.Arg1 = 0x100; // Open Locality
   DirectMsgArgsEx.Arg2 = 0x00;  // Locality Qualifier
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTpmServiceGuid, &DirectMsgArgsEx);
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiTpm2ServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg0 != 0x05000001) {
+  if (DirectMsgArgsEx.Arg0 != TPM2_FFA_SUCCESS_OK) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
     goto Done;
   } else {
@@ -367,25 +655,6 @@ FfaPartitionTestAppEntry (
   }
 
  #endif
-
-  // Invoke the Test Service to trigger a notification event
-  ZeroMem (&DirectMsgArgsEx, sizeof (DirectMsgArgsEx));
-  DirectMsgArgsEx.Arg0 = 0xDEF1;
-  DirectMsgArgsEx.Arg1 = 0xba7aff2eb1eac765;
-  DirectMsgArgsEx.Arg2 = 0xb710b3a359f64054; // Battery Service
-  DirectMsgArgsEx.Arg3 = 0x01;               // ID 1
-  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &FfaTestServiceGuid, &DirectMsgArgsEx);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
-    goto Done;
-  }
-
-  if (DirectMsgArgsEx.Arg0 != 0) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
-    goto Done;
-  } else {
-    DEBUG ((DEBUG_INFO, "Test Test Service Notification Test Success\n"));
-  }
 
   return EFI_SUCCESS;
 

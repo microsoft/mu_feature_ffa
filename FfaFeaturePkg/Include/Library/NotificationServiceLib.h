@@ -56,7 +56,6 @@ NotificationServiceHandle (
 
   @retval NOTIFICATION_STATUS_SUCCESS           Success
   @retval NOTIFICATION_STATUS_INVALID_PARAMETER Invalid parameter
-  @retval NOTIFICATION_STATUS_GENERIC_ERROR     NotificationSet failed
 
 **/
 NotificationStatus
@@ -69,14 +68,16 @@ NotificationServiceIdSet (
 /**
   Extracts the UUID from the message arguments
 
-  @param  Request   The incoming message to extract the UUID from
-  @param  Uuid      The UUID to populate
+  @param  UuidLo  The lower bytes of the UUID
+  @param  UuidHi  The higher bytes of the UUID
+  @param  Uuid    The UUID to populate
 
 **/
 VOID
 NotificationServiceExtractUuid (
-  DIRECT_MSG_ARGS_EX  *Request,
-  UINT8               *Uuid
+  UINT64  UuidLo,
+  UINT64  UuidHi,
+  UINT8   *Uuid
   );
 
 #endif /* NOTIFICATION_SERVICE_LIB_H_ */

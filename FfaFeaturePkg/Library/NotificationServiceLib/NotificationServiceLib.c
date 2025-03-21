@@ -14,42 +14,47 @@
 
 /* Notification Service Defines */
 #define NOTIFICATION_MAX_SERVICES  (16)
-#define NOTIFICATION_MAX_IDS       (64)
-#define NOTIFICATION_ID_NOT_FOUND  (-1)
+#define NOTIFICATION_MAX_MAPPINGS  (64)
+#define NOTIFICATION_NOT_FOUND     (-1)
+
+#define MESSAGE_INFO_DIR_RESP  (0x100)
+#define MESSAGE_INFO_ID_MASK   (0x03)
+
+#define MAPPING_MIN  (0x01)
+#define MAPPING_MAX  (0x06)
 
 /* Notification Service Structures */
 typedef struct {
-  UINT32     BitNum; // The OS translation bitmap value
-  UINT32     IdNum;  // The logical ID for the service
+  UINT32     Cookie;  // SW defined value
+  UINT16     Id;      // Global bitmask value
+  BOOLEAN    PerVcpu; // Notification flag
   BOOLEAN    InUse;
-} NotifBits;
+} NotifInfo;
 
-typedef struct  {
+typedef struct {
   UINT8        ServiceUuid[16];
-  NotifBits    ServiceBits[NOTIFICATION_MAX_IDS];
+  NotifInfo    ServiceInfo[NOTIFICATION_MAX_MAPPINGS];
+  UINT16       SourceId;
   BOOLEAN      InUse;
 } NotifService;
 
 /* Notification Service Variables */
-STATIC BOOLEAN       IdsAcquired                                     = FALSE;
-STATIC UINT16        SourceId                                        = 0;
-STATIC UINT16        DestinationId                                   = 0;
-STATIC UINT64        GlobalBitmask                                   = 0;
-STATIC NotifService  NotificationServices[NOTIFICATION_MAX_SERVICES] = { 0 };
+STATIC UINT64        GlobalBitmask;
+STATIC NotifService  NotificationServices[NOTIFICATION_MAX_SERVICES];
 
 /**
-  Checks if the ID passed in matches one stored within the service structure
+  Checks if the cookie passed in matches one stored within the service structure
 
-  @param  IdNum   The ID number to look for
-  @param  Service The service to search for the given ID
+  @param  Cookie   The cookie value to search for
+  @param  Service  The service to search for the given ID
 
-  @return The index of the ID if found, otherwise -1 (NOTIFICATION_ID_NOT_FOUND)
+  @return The index of the cookie if found, otherwise -1 (NOTIFICATION_NOT_FOUND)
 
 **/
 STATIC
 INT8
-IsMatchingId (
-  UINT32        IdNum,
+IsMatchingCookie (
+  UINT32        Cookie,
   NotifService  *Service
   )
 {
@@ -57,24 +62,25 @@ IsMatchingId (
 
   /* Validate the incoming function parameters */
   if (Service == NULL) {
-    return NOTIFICATION_ID_NOT_FOUND;
+    return NOTIFICATION_NOT_FOUND;
   }
 
-  for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
-    if (Service->ServiceBits[Index].InUse && (Service->ServiceBits[Index].IdNum == IdNum)) {
+  for (Index = 0; Index < NOTIFICATION_MAX_MAPPINGS; Index++) {
+    if (Service->ServiceInfo[Index].InUse && (Service->ServiceInfo[Index].Cookie == Cookie)) {
       return Index;
     }
   }
 
-  return NOTIFICATION_ID_NOT_FOUND;
+  return NOTIFICATION_NOT_FOUND;
 }
 
 /**
   Adds or removes service bit information to the local notification services struct array
 
-  @param  Destroy   Whether or not we are adding or removing bit information
-  @param  Request   The incoming message containing the bit information
-  @param  Service   The service we are updating bit information for
+  @param  Unregister  Whether or not we are adding or removing bit information
+  @param  Request     The incoming message containing the bit information
+  @param  Response    The outgoing message containing potential error information
+  @param  Service     The service we are updating bit information for
 
   @retval NOTIFICATION_STATUS_SUCCESS           Success
   @retval NOTIFICATION_STATUS_INVALID_PARAMETER Invalid parameter
@@ -82,84 +88,93 @@ IsMatchingId (
 **/
 STATIC
 NotificationStatus
-UpdateServiceBits (
-  BOOLEAN             Destroy,
+UpdateServiceInfo (
+  BOOLEAN             Unregister,
   DIRECT_MSG_ARGS_EX  *Request,
+  DIRECT_MSG_ARGS_EX  *Response,
   NotifService        *Service
   )
 {
-  NotificationStatus  ReturnVal;
-  INT8                FoundIndex;
-  UINT8               IdIndex;
-  UINT8               NumBits;
-  UINTN               *Mappings;
-  UINT8               MappingIndex;
-  UINT32              NotificationId;
-  UINT32              BitmapBitNum;
-  BOOLEAN             EmptyFound;
-  NotifService        TempService;
-  UINT64              TempBitmask;
+  NotificationStatus   ReturnVal;
+  INT8                 FoundIndex;
+  UINT8                ReqNumMappings;
+  NotificationMapping  *ReqMappings;
+  UINT8                ReqMappingIndex;
+  UINT8                RespNumMappings;
+  NotificationMapping  *RespMappings;
+  UINT16               MappingId;
+  UINT32               Cookie;
+  UINT8                PerVcpu;
+  UINT8                EmptyIndex;
+  BOOLEAN              EmptyFound;
 
   /* Validate the incoming function parameters */
   if ((Request == NULL) || (Service == NULL)) {
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
-  NumBits  = Request->Arg3;
-  Mappings = &Request->Arg4;
+  /* Number of cookie/ID pairs = x11. Cookie/ID pairs = x12 (i.e. Arg7/Arg8) */
+  ReqNumMappings = Request->Arg7;
+  ReqMappings    = (NotificationMapping *)&Request->Arg8;
 
-  /* You must be setting/destroying at least one bit and no more than the service supports */
-  if ((NumBits <= 0) || (NumBits > NOTIFICATION_MAX_IDS)) {
-    DEBUG ((DEBUG_ERROR, "Invalid NumBits: %x\n", NumBits));
+  /* Response values, same location as above */
+  RespNumMappings = 0;
+  RespMappings    = (NotificationMapping *)&Response->Arg8;
+
+  /* You must be adding/removing at least one bit and no more than a transaction supports */
+  if ((ReqNumMappings < MAPPING_MIN) || (ReqNumMappings > MAPPING_MAX)) {
+    DEBUG ((DEBUG_ERROR, "Invalid Number of Mappings: %x\n", ReqNumMappings));
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
   ReturnVal = NOTIFICATION_STATUS_SUCCESS;
 
-  /* Copy the current service structure and global bitmask to the temporaries */
-  CopyMem (&TempService, Service, sizeof (NotifService));
-  TempBitmask = GlobalBitmask;
-
   /* Need to go through all of the setup bits and update the structure */
-  for (MappingIndex = 0; MappingIndex < NumBits; MappingIndex++) {
-    NotificationId = Mappings[MappingIndex];
-    BitmapBitNum   = (UINT64)Mappings[MappingIndex] >> 32;
-    FoundIndex     = IsMatchingId (NotificationId, &TempService);
+  for (ReqMappingIndex = 0; ReqMappingIndex < ReqNumMappings; ReqMappingIndex++) {
+    MappingId  = ReqMappings[ReqMappingIndex].Bits.Id;
+    Cookie     = ReqMappings[ReqMappingIndex].Bits.Cookie;
+    PerVcpu    = ReqMappings[ReqMappingIndex].Bits.PerVpcu;
+    FoundIndex = IsMatchingCookie (Cookie, Service);
 
-    if (Destroy) {
-      /* If we can not find the ID to destroy, it is an error */
-      if (FoundIndex == NOTIFICATION_ID_NOT_FOUND) {
-        DEBUG ((DEBUG_ERROR, "Invalid Destroy ID: %x Not Found\n", NotificationId));
+    /* Check if we are doing an unregister */
+    if (Unregister) {
+      /* If we can not find the cookie to unregister, it is an error */
+      if (FoundIndex == NOTIFICATION_NOT_FOUND) {
+        DEBUG ((DEBUG_ERROR, "Invalid Unregister - Cookie: %x Not Registered\n", Cookie));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-        break;
-        /* If the bitmask bit is not set, it is an error */
-      } else if (!(GlobalBitmask & (1 << BitmapBitNum))) {
-        DEBUG ((DEBUG_ERROR, "Invalid Destroy Bitmap Bit: %x Not Set\n", BitmapBitNum));
+        /* If the IDs do not match, it is an error */
+      } else if (Service->ServiceInfo[FoundIndex].Id != MappingId) {
+        DEBUG ((
+          DEBUG_ERROR,
+          "Invalid Unregister - ID Registered: %x Mismatch\n",
+          Service->ServiceInfo[FoundIndex].Id
+          ));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-        break;
+        /* Otherwise, clear the data */
       } else {
-        /* Clear the data */
-        TempService.ServiceBits[FoundIndex].BitNum = 0;
-        TempService.ServiceBits[FoundIndex].IdNum  = 0;
-        TempService.ServiceBits[FoundIndex].InUse  = FALSE;
-        TempBitmask                               &= ~(1 << BitmapBitNum);
+        Service->ServiceInfo[FoundIndex].Cookie  = 0;
+        Service->ServiceInfo[FoundIndex].Id      = 0;
+        Service->ServiceInfo[FoundIndex].InUse   = FALSE;
+        Service->ServiceInfo[FoundIndex].PerVcpu = FALSE;
+        GlobalBitmask                           &= ~(1 << MappingId);
       }
+
+      /* Otherwise, we are doing a register */
     } else {
-      /* If we can find the ID to setup, it is an error */
-      if (FoundIndex != NOTIFICATION_ID_NOT_FOUND) {
-        DEBUG ((DEBUG_ERROR, "Invalid Setup ID: %x Found\n", NotificationId));
+      /* If we can find the cookie to register, it is an error */
+      if (FoundIndex != NOTIFICATION_NOT_FOUND) {
+        DEBUG ((DEBUG_ERROR, "Invalid Register - Cookie: %x Already Registered\n", Cookie));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-        break;
-        /* If the bitmas bit is set, it is an error */
-      } else if (GlobalBitmask & (1 << BitmapBitNum)) {
-        DEBUG ((DEBUG_ERROR, "Invalid Setup Bitmap Bit: %x Set\n", BitmapBitNum));
+        /* If the GlobalBitmask bit is set, it is an error */
+      } else if (GlobalBitmask & (1 << MappingId)) {
+        DEBUG ((DEBUG_ERROR, "Invalid Register - ID: %x Already Registered\n", MappingId));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-        break;
+        /* Otherwise, set the data */
       } else {
         /* Need to loop through the bits within the structure and find an empty location */
         EmptyFound = FALSE;
-        for (IdIndex = 0; IdIndex < NOTIFICATION_MAX_IDS; IdIndex++) {
-          if (!TempService.ServiceBits[IdIndex].InUse) {
+        for (EmptyIndex = 0; EmptyIndex < NOTIFICATION_MAX_MAPPINGS; EmptyIndex++) {
+          if (!Service->ServiceInfo[EmptyIndex].InUse) {
             EmptyFound = TRUE;
             break;
           }
@@ -167,103 +182,47 @@ UpdateServiceBits (
 
         /* If we can not find an empty space, it is an error */
         if (!EmptyFound) {
-          DEBUG ((DEBUG_ERROR, "Setup Failed - No Memory Available\n"));
+          DEBUG ((DEBUG_ERROR, "Register Failed - No Memory Available\n"));
           ReturnVal = NOTIFICATION_STATUS_NO_MEM;
-          break;
+          /* Otherwise, update the data */
         } else {
-          /* Update the data */
-          TempService.ServiceBits[IdIndex].BitNum = BitmapBitNum;
-          TempService.ServiceBits[IdIndex].IdNum  = NotificationId;
-          TempService.ServiceBits[IdIndex].InUse  = TRUE;
-          TempBitmask                            |= (1 << BitmapBitNum);
+          Service->ServiceInfo[EmptyIndex].Cookie  = Cookie;
+          Service->ServiceInfo[EmptyIndex].Id      = MappingId;
+          Service->ServiceInfo[EmptyIndex].InUse   = TRUE;
+          Service->ServiceInfo[EmptyIndex].PerVcpu = (PerVcpu) ? TRUE : FALSE;
+          GlobalBitmask                           |= (1 << MappingId);
         }
       }
     }
+
+    /* Update the response if something went wrong */
+    if (ReturnVal != NOTIFICATION_STATUS_SUCCESS) {
+      RespMappings[RespNumMappings].Uint64         = ReqMappings[ReqMappingIndex].Uint64;
+      RespMappings[RespNumMappings].Bits.ErrorCode = ReturnVal;
+      RespNumMappings++;
+      ReturnVal = NOTIFICATION_STATUS_PARTIAL;
+    }
   }
 
-  /* Copy the temporaries back if everything was successful */
-  if (ReturnVal == NOTIFICATION_STATUS_SUCCESS) {
-    CopyMem (Service, &TempService, sizeof (NotifService));
-    GlobalBitmask = TempBitmask;
-  }
-
+  /* Update the number of response mappings */
+  Response->Arg7 = RespNumMappings;
   return ReturnVal;
 }
 
 /**
-  Handler for Notification Query command
-
-  @param  Request   The incoming message
-  @param  Response  The outgoing message
-
-  @retval NOTIFICATION_STATUS_GENERIC_ERROR Unsupported Function
-
-**/
-STATIC
-NotificationStatus
-QueryHandler (
-  DIRECT_MSG_ARGS_EX  *Request,
-  DIRECT_MSG_ARGS_EX  *Response
-  )
-{
-  /* TODO: Remove when/if we decided to support Query */
-  Response->Arg0 = NOTIFICATION_STATUS_GENERIC_ERROR;
-  DEBUG ((DEBUG_ERROR, "Notification Service Query Unsupported\n"));
-  return NOTIFICATION_STATUS_GENERIC_ERROR;
-
-  UINT8               Index;
-  UINT8               NumIds;
-  NotifService        *Service;
-  UINT8               Uuid[16];
-  NotificationStatus  ReturnVal;
-
-  Service   = NULL;
-  ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-
-  /* Extract the UUID from the message */
-  NotificationServiceExtractUuid (Request, Uuid);
-
-  /* Attempt to find the UUID within our list */
-  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
-      Service = &NotificationServices[Index];
-      break;
-    }
-  }
-
-  /* Check for a valid UUID */
-  if (Service != NULL) {
-    /* Count the number of IDs that are in use */
-    NumIds = 0;
-    for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
-      if (Service->ServiceBits[Index].InUse) {
-        NumIds++;
-      }
-    }
-
-    Response->Arg1 = NumIds;
-    ReturnVal      = NOTIFICATION_STATUS_SUCCESS;
-  } else {
-    DEBUG ((DEBUG_ERROR, "Service Query Failed - Error Code: %x\n", ReturnVal));
-  }
-
-  Response->Arg0 = ReturnVal;
-  return ReturnVal;
-}
-
-/**
-  Handler for Notification Setup command
+  Handler for Notification Register command
 
   @param  Request   The incoming message
   @param  Response  The outgoing message
 
   @retval NOTIFICATION_STATUS_SUCCESS           Success
   @retval NOTIFICATION_STATUS_INVALID_PARAMETER Invalid parameter
+  @retval NOTIFICATION_STATUS_NO_MEM            Out of resources
 
 **/
 STATIC
 NotificationStatus
-SetupHandler (
+RegisterHandler (
   DIRECT_MSG_ARGS_EX  *Request,
   DIRECT_MSG_ARGS_EX  *Response
   )
@@ -276,21 +235,18 @@ SetupHandler (
   Service   = NULL;
   ReturnVal = NOTIFICATION_STATUS_NO_MEM;
 
-  /* Extract the UUID from the message */
-  NotificationServiceExtractUuid (Request, Uuid);
-
-  /* If we haven't stored the source and destination IDs, store them */
-  if (!IdsAcquired) {
-    SourceId      = Request->SourceId;
-    DestinationId = Request->DestinationId;
-    IdsAcquired   = TRUE;
-  }
+  /* Extract the UUID from the message x7-x8 (i.e. Arg3-Arg4) */
+  NotificationServiceExtractUuid (Request->Arg3, Request->Arg4, Uuid);
 
   /* Attempt to find the UUID within our list */
   for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
-      Service = &NotificationServices[Index];
-      break;
+    /* Check if the service is marked as InUse */
+    if (NotificationServices[Index].InUse) {
+      /* Check if the UUID matches */
+      if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
+        Service = &NotificationServices[Index];
+        break;
+      }
     }
   }
 
@@ -298,27 +254,35 @@ SetupHandler (
   if (Service == NULL) {
     for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
       if (!NotificationServices[Index].InUse) {
+        /* Temporarily point to the empty location */
         Service = &NotificationServices[Index];
-        CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
-        Service->InUse = TRUE;
         break;
       }
     }
   }
 
-  /* Check for a valid UUID and validate the input parameters */
+  /* Check for a valid UUID */
   if (Service != NULL) {
-    ReturnVal = UpdateServiceBits (FALSE, Request, Service);
+    ReturnVal = UpdateServiceInfo (FALSE, Request, Response, Service);
+    /* Check if the update was successful or partially successful and this was a new addition */
+    if (((ReturnVal == NOTIFICATION_STATUS_SUCCESS) || (ReturnVal == NOTIFICATION_STATUS_PARTIAL)) &&
+        (!Service->InUse))
+    {
+      /* Update the UUID and set the location to InUse */
+      CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
+      Service->InUse = TRUE;
+    }
   } else {
-    DEBUG ((DEBUG_ERROR, "Service Setup Failed - Error Code: %x\n", ReturnVal));
+    DEBUG ((DEBUG_ERROR, "Service Register Failed - Error Code: %d\n", ReturnVal));
   }
 
-  Response->Arg0 = ReturnVal;
+  /* Update the error code */
+  Response->Arg6 = ReturnVal;
   return ReturnVal;
 }
 
 /**
-  Handler for Notification Destroy command
+  Handler for Notification Unregister command
 
   @param  Request   The incoming message
   @param  Response  The outgoing message
@@ -329,7 +293,7 @@ SetupHandler (
 **/
 STATIC
 NotificationStatus
-DestroyHandler (
+UnregisterHandler (
   DIRECT_MSG_ARGS_EX  *Request,
   DIRECT_MSG_ARGS_EX  *Response
   )
@@ -342,25 +306,30 @@ DestroyHandler (
   Service   = NULL;
   ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
-  /* Extract the UUID from the message */
-  NotificationServiceExtractUuid (Request, Uuid);
+  /* Extract the UUID from the message x7-x8 (i.e. Arg3-Arg4) */
+  NotificationServiceExtractUuid (Request->Arg3, Request->Arg4, Uuid);
 
   /* Attempt to find the UUID within our list */
   for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
-      Service = &NotificationServices[Index];
-      break;
+    /* Check if the service is marked as InUse */
+    if (NotificationServices[Index].InUse) {
+      /* Check if the UUID matches */
+      if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
+        Service = &NotificationServices[Index];
+        break;
+      }
     }
   }
 
-  /* Check for a valid UUID and validate the input parameters */
+  /* Check for a valid UUID */
   if (Service != NULL) {
-    ReturnVal = UpdateServiceBits (TRUE, Request, Service);
+    ReturnVal = UpdateServiceInfo (TRUE, Request, Response, Service);
   } else {
-    DEBUG ((DEBUG_ERROR, "Service Destroy Failed - Error Code: %x\n", ReturnVal));
+    DEBUG ((DEBUG_ERROR, "Service Unregister Failed - Error Code: %d\n", ReturnVal));
   }
 
-  Response->Arg0 = ReturnVal;
+  /* Update the error code */
+  Response->Arg6 = ReturnVal;
   return ReturnVal;
 }
 
@@ -375,12 +344,10 @@ NotificationServiceInit (
 {
   UINT8  Index;
 
-  /* Initialize Global Values */
-  IdsAcquired   = FALSE;
-  SourceId      = 0;
-  DestinationId = 0;
+  /* Initialize Global Bitmask */
   GlobalBitmask = 0;
 
+  /* Initialize the Notification Service structure */
   for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
     SetMem (&NotificationServices[Index], sizeof (NotifService), 0);
   }
@@ -411,33 +378,44 @@ NotificationServiceHandle (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
-  UINT64  Opcode;
-
   /* Validate the input parameters before attempting to dereference or pass them along */
   if ((Request == NULL) || (Response == NULL)) {
     return;
   }
 
-  Opcode = Request->Arg0;
+  /* TODO: Figure out how to set x5-x8 */
+  /* Set common response register values */
+  Response->Arg1 = Request->Arg1;
+  Response->Arg2 = Request->Arg2;
+  Response->Arg3 = Request->Arg3;
+  Response->Arg4 = Request->Arg4;
+  Response->Arg5 = Request->Arg5 | MESSAGE_INFO_DIR_RESP;
 
-  switch (Opcode) {
-    case NOTIFICATION_OPCODE_QUERY:
-      QueryHandler (Request, Response);
+  /* Message ID = Bits[0:1] of x9 (i.e. Arg5)*/
+  switch (Request->Arg5 & MESSAGE_INFO_ID_MASK) {
+    case NOTIFICATION_OPCODE_ADD:
+    case NOTIFICATION_OPCODE_REMOVE:
+      /* Update the error code */
+      Response->Arg6 = NOTIFICATION_STATUS_NOT_SUPPORTED;
+      DEBUG ((DEBUG_ERROR, "Add/Remove Unsupported\n"));
       break;
 
-    case NOTIFICATION_OPCODE_SETUP:
-      SetupHandler (Request, Response);
+    case NOTIFICATION_OPCODE_REGISTER:
+      RegisterHandler (Request, Response);
       break;
 
-    case NOTIFICATION_OPCODE_DESTROY:
-      DestroyHandler (Request, Response);
+    case NOTIFICATION_OPCODE_UNREGISTER:
+      UnregisterHandler (Request, Response);
       break;
 
     default:
-      Response->Arg0 = NOTIFICATION_STATUS_INVALID_PARAMETER;
+      /* Update the error code */
+      Response->Arg6 = NOTIFICATION_STATUS_INVALID_PARAMETER;
       DEBUG ((DEBUG_ERROR, "Invalid Notification Service Opcode\n"));
       break;
   }
+
+  /* If applicable, x10-x17 (i.e. Arg6-Arg13) will be set in the handler function */
 }
 
 /**
@@ -449,12 +427,11 @@ NotificationServiceHandle (
 
   @retval NOTIFICATION_STATUS_SUCCESS           Success
   @retval NOTIFICATION_STATUS_INVALID_PARAMETER Invalid parameter
-  @retval NOTIFICATION_STATUS_GENERIC_ERROR     NotificationSet failed
 
 **/
 NotificationStatus
 NotificationServiceIdSet (
-  UINT32  Id,
+  UINT32  Cookie,
   UINT8   *ServiceUuid,
   UINT32  Flag
   )
@@ -475,22 +452,31 @@ NotificationServiceIdSet (
 
   /* Attempt to find the UUID within our list */
   for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    if (!CompareMem (ServiceUuid, NotificationServices[Index].ServiceUuid, sizeof (NotificationServices[Index].ServiceUuid))) {
-      Service = &NotificationServices[Index];
-      break;
+    /* Check if the service is marked as InUse */
+    if (NotificationServices[Index].InUse) {
+      /* Check if the UUID matches */
+      if (!CompareMem (
+             ServiceUuid,
+             NotificationServices[Index].ServiceUuid,
+             sizeof (NotificationServices[Index].ServiceUuid)
+             ))
+      {
+        Service = &NotificationServices[Index];
+        break;
+      }
     }
   }
 
   /* UUID was found */
   if (Service != NULL) {
-    /* Attempt to find the logical ID within the mapped list */
-    for (Index = 0; Index < NOTIFICATION_MAX_IDS; Index++) {
-      if (Service->ServiceBits[Index].IdNum == Id) {
-        Bitmask = (1 << Service->ServiceBits[Index].BitNum);
-        Status  = FfaNotificationSet (SourceId, Flag, Bitmask);
-        if (EFI_ERROR (Status)) {
-          ReturnVal = NOTIFICATION_STATUS_GENERIC_ERROR;
-        } else {
+    /* Attempt to find the cookie within the mapped list */
+    for (Index = 0; Index < NOTIFICATION_MAX_MAPPINGS; Index++) {
+      if (Service->ServiceInfo[Index].Cookie == Cookie) {
+        Bitmask = (1 << Service->ServiceInfo[Index].Id);
+        /* TODO: Figure out how we are going to do PerVcpu setup */
+        // Flag |= (Service->ServiceInfo[Index].PerVcpu);
+        Status = FfaNotificationSet (Service->SourceId, Flag, Bitmask);
+        if (!EFI_ERROR (Status)) {
           ReturnVal = NOTIFICATION_STATUS_SUCCESS;
         }
 
@@ -505,29 +491,26 @@ NotificationServiceIdSet (
 /**
   Extracts the UUID from the message arguments
 
-  @param  Request   The incoming message to extract the UUID from
-  @param  Uuid      The UUID to populate
+  @param  UuidLo  The lower bytes of the UUID
+  @param  UuidHi  The higher bytes of the UUID
+  @param  Uuid    The UUID to populate
 
 **/
 VOID
 NotificationServiceExtractUuid (
-  DIRECT_MSG_ARGS_EX  *Request,
-  UINT8               *Uuid
+  UINT64  UuidLo,
+  UINT64  UuidHi,
+  UINT8   *Uuid
   )
 {
-  UINT64  UuidLo;
-  UINT64  UuidHi;
-  UINT8   Index;
-  UINT8   UuidHiByte;
-  UINT8   UuidLoByte;
+  UINT8  Index;
+  UINT8  UuidHiByte;
+  UINT8  UuidLoByte;
 
   /* Validate the incoming function parameters */
-  if ((Request == NULL) || (Uuid == NULL)) {
+  if (Uuid == NULL) {
     return;
   }
-
-  UuidLo = Request->Arg1;
-  UuidHi = Request->Arg2;
 
   /* Copy the upper 8 bytes */
   for (Index = 0; Index < 8; Index++) {

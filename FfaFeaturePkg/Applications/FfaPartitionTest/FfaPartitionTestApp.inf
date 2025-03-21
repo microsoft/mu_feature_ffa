@@ -53,3 +53,8 @@
 [Pcd]
   gArmTokenSpaceGuid.PcdFfaRxBuffer
   gArmTokenSpaceGuid.PcdFfaLibConduitSmc
+
+[Guids]
+  gEfiTpm2ServiceFfaGuid
+  gEfiNotificationServiceFfaGuid
+  gEfiTestServiceFfaGuid
