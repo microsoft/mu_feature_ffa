@@ -10,17 +10,32 @@
 #define NOTIFICATION_SERVICE_FFA_H_
 
 #define NOTIFICATION_SERVICE_UUID \
-  { 0xb510b3a3, 0x59f6, 0x4054, { 0xba, 0x7a, 0xff, 0x2e, 0xb1, 0xea, 0xc7, 0x65 } }
+  { 0xe474d87e, 0x5731, 0x4044, { 0xa7, 0x27, 0xcb, 0x3e, 0x8c, 0xf3, 0xc8, 0xdf } }
 
 #define NOTIFICATION_STATUS_SUCCESS            (0)
-#define NOTIFICATION_STATUS_GENERIC_ERROR      (-1)
+#define NOTIFICATION_STATUS_NOT_SUPPORTED      (-1)
 #define NOTIFICATION_STATUS_INVALID_PARAMETER  (-2)
 #define NOTIFICATION_STATUS_NO_MEM             (-3)
+#define NOTIFICATION_STATUS_PARTIAL            (-4)
 
-#define NOTIFICATION_OPCODE_BASE     (0)
-#define NOTIFICATION_OPCODE_QUERY    (NOTIFICATION_OPCODE_BASE + 0)
-#define NOTIFICATION_OPCODE_SETUP    (NOTIFICATION_OPCODE_BASE + 1)
-#define NOTIFICATION_OPCODE_DESTROY  (NOTIFICATION_OPCODE_BASE + 2)
+#define NOTIFICATION_OPCODE_BASE        (0)
+#define NOTIFICATION_OPCODE_ADD         (NOTIFICATION_OPCODE_BASE + 0)
+#define NOTIFICATION_OPCODE_REMOVE      (NOTIFICATION_OPCODE_BASE + 1)
+#define NOTIFICATION_OPCODE_REGISTER    (NOTIFICATION_OPCODE_BASE + 2)
+#define NOTIFICATION_OPCODE_UNREGISTER  (NOTIFICATION_OPCODE_BASE + 3)
+
+#pragma pack (1)
+typedef union {
+  struct {
+    UINTN    Cookie    : 32;
+    UINTN    Reserved  : 14;
+    UINTN    ErrorCode : 8;
+    UINTN    PerVpcu   : 1;
+    UINTN    Id        : 9;
+  } Bits;
+  UINTN    Uint64;
+} NotificationMapping;
+#pragma pack ()
 
 extern EFI_GUID  gEfiNotificationServiceFfaGuid;
 
