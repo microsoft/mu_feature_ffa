@@ -270,7 +270,8 @@ RegisterHandler (
     {
       /* Update the UUID and set the location to InUse */
       CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
-      Service->InUse = TRUE;
+      Service->InUse    = TRUE;
+      Service->SourceId = Request->SourceId;
     }
   } else {
     DEBUG ((DEBUG_ERROR, "Service Register Failed - Error Code: %d\n", ReturnVal));
