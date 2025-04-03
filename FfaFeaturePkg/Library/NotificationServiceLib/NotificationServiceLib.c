@@ -53,7 +53,7 @@ IsMatchingId (
   NotifService  *Service
   )
 {
-  UINT8 Index;
+  UINT8  Index;
 
   /* Validate the incoming function parameters */
   if (Service == NULL) {
@@ -117,7 +117,7 @@ UpdateServiceBits (
   ReturnVal = NOTIFICATION_STATUS_SUCCESS;
 
   /* Copy the current service structure and global bitmask to the temporaries */
-  CopyMem(&TempService, Service, sizeof(NotifService));
+  CopyMem (&TempService, Service, sizeof (NotifService));
   TempBitmask = GlobalBitmask;
 
   /* Need to go through all of the setup bits and update the structure */
@@ -132,7 +132,7 @@ UpdateServiceBits (
         DEBUG ((DEBUG_ERROR, "Invalid Destroy ID: %x Not Found\n", NotificationId));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
         break;
-      /* If the bitmask bit is not set, it is an error */
+        /* If the bitmask bit is not set, it is an error */
       } else if (!(GlobalBitmask & (1 << BitmapBitNum))) {
         DEBUG ((DEBUG_ERROR, "Invalid Destroy Bitmap Bit: %x Not Set\n", BitmapBitNum));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
@@ -142,7 +142,7 @@ UpdateServiceBits (
         TempService.ServiceBits[FoundIndex].BitNum = 0;
         TempService.ServiceBits[FoundIndex].IdNum  = 0;
         TempService.ServiceBits[FoundIndex].InUse  = FALSE;
-        TempBitmask &= ~(1 << BitmapBitNum);
+        TempBitmask                               &= ~(1 << BitmapBitNum);
       }
     } else {
       /* If we can find the ID to setup, it is an error */
@@ -150,7 +150,7 @@ UpdateServiceBits (
         DEBUG ((DEBUG_ERROR, "Invalid Setup ID: %x Found\n", NotificationId));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
         break;
-      /* If the bitmas bit is set, it is an error */
+        /* If the bitmas bit is set, it is an error */
       } else if (GlobalBitmask & (1 << BitmapBitNum)) {
         DEBUG ((DEBUG_ERROR, "Invalid Setup Bitmap Bit: %x Set\n", BitmapBitNum));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
@@ -175,7 +175,7 @@ UpdateServiceBits (
           TempService.ServiceBits[IdIndex].BitNum = BitmapBitNum;
           TempService.ServiceBits[IdIndex].IdNum  = NotificationId;
           TempService.ServiceBits[IdIndex].InUse  = TRUE;
-          TempBitmask |= (1 << BitmapBitNum);
+          TempBitmask                            |= (1 << BitmapBitNum);
         }
       }
     }
@@ -183,7 +183,7 @@ UpdateServiceBits (
 
   /* Copy the temporaries back if everything was successful */
   if (ReturnVal == NOTIFICATION_STATUS_SUCCESS) {
-    CopyMem(Service, &TempService, sizeof(NotifService));
+    CopyMem (Service, &TempService, sizeof (NotifService));
     GlobalBitmask = TempBitmask;
   }
 
@@ -339,7 +339,7 @@ DestroyHandler (
   UINT8               Uuid[16];
   NotificationStatus  ReturnVal;
 
-  Service  = NULL;
+  Service   = NULL;
   ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
   /* Extract the UUID from the message */
@@ -373,7 +373,7 @@ NotificationServiceInit (
   VOID
   )
 {
-  UINT8 Index;
+  UINT8  Index;
 
   /* Initialize Global Values */
   IdsAcquired   = FALSE;
@@ -382,7 +382,7 @@ NotificationServiceInit (
   GlobalBitmask = 0;
 
   for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    SetMem(&NotificationServices[Index], sizeof(NotifService), 0);
+    SetMem (&NotificationServices[Index], sizeof (NotifService), 0);
   }
 }
 
@@ -531,13 +531,13 @@ NotificationServiceExtractUuid (
 
   /* Copy the upper 8 bytes */
   for (Index = 0; Index < 8; Index++) {
-    UuidHiByte = (UINT8)(UuidHi >> ((7 - Index) * 8));
+    UuidHiByte  = (UINT8)(UuidHi >> ((7 - Index) * 8));
     Uuid[Index] = UuidHiByte;
   }
 
   /* Copy the lower 8 bytes */
   for (Index = 8; Index < 16; Index++) {
-    UuidLoByte = (UINT8)(UuidLo >> ((15 - Index) * 8));
+    UuidLoByte  = (UINT8)(UuidLo >> ((15 - Index) * 8));
     Uuid[Index] = UuidLoByte;
   }
 }
