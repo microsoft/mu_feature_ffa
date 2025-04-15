@@ -37,7 +37,7 @@ VOID
 FfaPrepareGuid (
   IN OUT EFI_GUID  *Guid
   )
-  {
+{
   UINT32  *Data32;
   UINT16  *Data16;
 
