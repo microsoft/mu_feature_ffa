@@ -37,29 +37,19 @@ VOID
 FfaPrepareGuid (
   IN OUT EFI_GUID  *Guid
   )
-{
-  UINT32  TempData[4];
+  {
+  UINT32  *Data32;
+  UINT16  *Data16;
 
   if (Guid == NULL) {
     return;
   }
 
-  //
-  // Swap Data2 and Data3 of the input GUID.
-  //
-
-  Guid->Data2 += Guid->Data3;
-  Guid->Data3  = Guid->Data2 - Guid->Data3;
-  Guid->Data2  = Guid->Data2 - Guid->Data3;
-  CopyMem (TempData, Guid, sizeof (EFI_GUID));
-
-  //
-  // Swap the bytes for TempData[2] and TempData[3].
-  //
-
-  TempData[2] = SwapBytes32 (TempData[2]);
-  TempData[3] = SwapBytes32 (TempData[3]);
-  CopyMem (Guid, TempData, sizeof (EFI_GUID));
+  Data32    = (UINT32 *)Guid;
+  Data32[0] = SwapBytes32 (Data32[0]);
+  Data16    = (UINT16 *)&Data32[1];
+  Data16[0] = SwapBytes16 (Data16[0]);
+  Data16[1] = SwapBytes16 (Data16[1]);
 }
 
 STATIC
