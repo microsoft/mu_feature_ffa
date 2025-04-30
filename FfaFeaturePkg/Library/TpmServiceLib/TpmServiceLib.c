@@ -125,9 +125,9 @@ InitInternalCrb (
   /* Set the CRB Command/Response buffer address + size. */
   InternalTpmCrb->CrbControlCommandAddressHigh = (UINT32)RShiftU64 ((UINTN)InternalTpmCrb->CrbDataBuffer, 32);
   InternalTpmCrb->CrbControlCommandAddressLow  = (UINT32)(UINTN)InternalTpmCrb->CrbDataBuffer;
-  InternalTpmCrb->CrbControlCommandSize        = sizeof(InternalTpmCrb->CrbDataBuffer);
+  InternalTpmCrb->CrbControlCommandSize        = sizeof (InternalTpmCrb->CrbDataBuffer);
   InternalTpmCrb->CrbControlResponseAddrss     = (UINTN)InternalTpmCrb->CrbDataBuffer;
-  InternalTpmCrb->CrbControlResponseSize       = sizeof(InternalTpmCrb->CrbDataBuffer);
+  InternalTpmCrb->CrbControlResponseSize       = sizeof (InternalTpmCrb->CrbDataBuffer);
 }
 
 /**
@@ -199,9 +199,9 @@ CleanInternalCrb (
   /* Set the CRB Command/Response buffer address + size. */
   InternalTpmCrb->CrbControlCommandAddressHigh = (UINT32)RShiftU64 ((UINTN)InternalTpmCrb->CrbDataBuffer, 32);
   InternalTpmCrb->CrbControlCommandAddressLow  = (UINT32)(UINTN)InternalTpmCrb->CrbDataBuffer;
-  InternalTpmCrb->CrbControlCommandSize        = sizeof(InternalTpmCrb->CrbDataBuffer);
+  InternalTpmCrb->CrbControlCommandSize        = sizeof (InternalTpmCrb->CrbDataBuffer);
   InternalTpmCrb->CrbControlResponseAddrss     = (UINTN)InternalTpmCrb->CrbDataBuffer;
-  InternalTpmCrb->CrbControlResponseSize       = sizeof(InternalTpmCrb->CrbDataBuffer);
+  InternalTpmCrb->CrbControlResponseSize       = sizeof (InternalTpmCrb->CrbDataBuffer);
 
   /* Remaining registers can be ignored. */
 }
@@ -369,14 +369,14 @@ HandleLocalityRequest (
     }
 
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Relinquish\n", Locality));
-    Status = TpmSstLocalityRelinquish (Locality);
+    Status         = TpmSstLocalityRelinquish (Locality);
     ActiveLocality = NUM_LOCALITIES; // Invalid
-  /* Check if we are doing a locality request */
+    /* Check if we are doing a locality request */
   } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Request\n", Locality));
-    Status = TpmSstLocalityRequest (Locality);
+    Status         = TpmSstLocalityRequest (Locality);
     ActiveLocality = Locality;
-  /* Otherwise, the host didn't set the correct bits, invalid */
+    /* Otherwise, the host didn't set the correct bits, invalid */
   } else {
     DEBUG ((DEBUG_ERROR, "Request/Relinquish Bit Not Set\n"));
     return TPM2_FFA_ERROR_DENIED;
@@ -483,7 +483,7 @@ StartHandler (
     /* Set the locality state to OPEN */
     mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
     goto exit;
-  /* Check if there was a request to close a locality */
+    /* Check if there was a request to close a locality */
   } else if (Function == TPM_START_PROCESS_CLOSE_LOC) {
     /* Set the locality state to CLOSED */
     mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
@@ -507,10 +507,11 @@ StartHandler (
       ReturnVal = TPM2_FFA_ERROR_INVARG;
       DEBUG ((DEBUG_ERROR, "Locality Mismatch\n"));
     }
-  /* Check if we are processing a locality request */
+
+    /* Check if we are processing a locality request */
   } else if (Function == TPM_START_PROCESS_LOC_REQ) {
     ReturnVal = HandleLocalityRequest (Locality);
-  /* Otherwise, invalid function ID */
+    /* Otherwise, invalid function ID */
   } else {
     ReturnVal = TPM2_FFA_ERROR_INVARG;
     DEBUG ((DEBUG_ERROR, "Invalid Start Function\n"));
@@ -622,7 +623,7 @@ TpmServiceInit (
   /* Default the locality states */
   for (Locality = 0; Locality < NUM_LOCALITIES; Locality++) {
     /* Locality 0 and 1 are open by default */
-    if ((Locality == 0)|| (Locality == 1)) {
+    if ((Locality == 0) || (Locality == 1)) {
       mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
     } else {
       mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
