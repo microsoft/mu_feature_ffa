@@ -18,6 +18,8 @@
 **/
 
 #include <Uefi.h>
+#include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/TpmServiceLib.h>
@@ -27,11 +29,13 @@
 #include <IndustryStandard/Tpm20.h>
 
 /* TPM Service Defines */
-#define TPM_MAJOR_VER  (1)
-#define TPM_MINOR_VER  (0)
+#define TPM_MAJOR_VER  (0x1)
+#define TPM_MINOR_VER  (0x0)
 
-#define TPM_START_PROCESS_CMD      (0)
-#define TPM_START_PROCESS_LOC_REQ  (1)
+#define TPM_START_PROCESS_CMD        (0x0)
+#define TPM_START_PROCESS_LOC_REQ    (0x1)
+#define TPM_START_PROCESS_OPEN_LOC   (0x100)
+#define TPM_START_PROCESS_CLOSE_LOC  (0x101)
 
 #define TPM_LOCALITY_OFFSET  (0x1000)
 
@@ -117,6 +121,13 @@ InitInternalCrb (
   SetMem ((void *)InternalTpmCrb, sizeof (PTP_CRB_REGISTERS), 0x00);
   InternalTpmCrb->InterfaceId      = mInterfaceIdDefault.Uint32;
   InternalTpmCrb->CrbControlStatus = PTP_CRB_CONTROL_AREA_STATUS_TPM_IDLE;
+
+  /* Set the CRB Command/Response buffer address + size. */
+  InternalTpmCrb->CrbControlCommandAddressHigh = (UINT32)RShiftU64 ((UINTN)InternalTpmCrb->CrbDataBuffer, 32);
+  InternalTpmCrb->CrbControlCommandAddressLow  = (UINT32)(UINTN)InternalTpmCrb->CrbDataBuffer;
+  InternalTpmCrb->CrbControlCommandSize        = sizeof (InternalTpmCrb->CrbDataBuffer);
+  InternalTpmCrb->CrbControlResponseAddrss     = (UINTN)InternalTpmCrb->CrbDataBuffer;
+  InternalTpmCrb->CrbControlResponseSize       = sizeof (InternalTpmCrb->CrbDataBuffer);
 }
 
 /**
@@ -184,6 +195,13 @@ CleanInternalCrb (
   } else {
     InternalTpmCrb->CrbControlStatus = 0;
   }
+
+  /* Set the CRB Command/Response buffer address + size. */
+  InternalTpmCrb->CrbControlCommandAddressHigh = (UINT32)RShiftU64 ((UINTN)InternalTpmCrb->CrbDataBuffer, 32);
+  InternalTpmCrb->CrbControlCommandAddressLow  = (UINT32)(UINTN)InternalTpmCrb->CrbDataBuffer;
+  InternalTpmCrb->CrbControlCommandSize        = sizeof (InternalTpmCrb->CrbDataBuffer);
+  InternalTpmCrb->CrbControlResponseAddrss     = (UINTN)InternalTpmCrb->CrbDataBuffer;
+  InternalTpmCrb->CrbControlResponseSize       = sizeof (InternalTpmCrb->CrbDataBuffer);
 
   /* Remaining registers can be ignored. */
 }
@@ -342,12 +360,6 @@ HandleLocalityRequest (
 
   InternalTpmCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmInternalBaseAddress) + (Locality * TPM_LOCALITY_OFFSET));
 
-  /* Check if the locality is open */
-  if (mLocalityStates[Locality] == TPM_LOCALITY_CLOSED) {
-    DEBUG ((DEBUG_ERROR, "Locality Closed\n"));
-    return TPM2_FFA_ERROR_DENIED;
-  }
-
   /* Check if we are doing a locality relinquish */
   if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_RELINQUISH) {
     /* Make sure the locality being relinquished is the active locality */
@@ -357,14 +369,14 @@ HandleLocalityRequest (
     }
 
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Relinquish\n", Locality));
-    Status = TpmSstLocalityRelinquish (Locality);
+    Status         = TpmSstLocalityRelinquish (Locality);
     ActiveLocality = NUM_LOCALITIES; // Invalid
-  /* Check if we are doing a locality request */
+    /* Check if we are doing a locality request */
   } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Request\n", Locality));
-    Status = TpmSstLocalityRequest (Locality);
+    Status         = TpmSstLocalityRequest (Locality);
     ActiveLocality = Locality;
-  /* Otherwise, the host didn't set the correct bits, invalid */
+    /* Otherwise, the host didn't set the correct bits, invalid */
   } else {
     DEBUG ((DEBUG_ERROR, "Request/Relinquish Bit Not Set\n"));
     return TPM2_FFA_ERROR_DENIED;
@@ -449,24 +461,43 @@ StartHandler (
   )
 {
   TpmStatus  ReturnVal;
-  UINT8      Function;
+  UINT16     Function;
   UINT8      Locality;
 
   ReturnVal = TPM2_FFA_SUCCESS_OK;
   Function  = Request->Arg1;
   Locality  = Request->Arg2;
 
-  /* Based on the function we will need to read from the corresponding address
-    * register in the tpm_crb to know where to pull the data from:
-    * NOTE: function = 0, command is ready to be processed
-    *       function = 1, locality request is ready to be processed
-    *       locality = 0...4, the locality where the command or request is located */
+  /* Check to make sure we received a valid locality */
   if (Locality >= NUM_LOCALITIES) {
     Response->Arg0 = TPM2_FFA_ERROR_INVARG;
     DEBUG ((DEBUG_ERROR, "Invalid Locality\n"));
-    return TPM2_FFA_ERROR_INVARG;
+    ReturnVal = TPM2_FFA_ERROR_INVARG;
+    goto exit;
   }
 
+  /* NOTE: The following commands should only be coming
+   *       from TF-A. */
+  /* Check if there was a request to open a locality */
+  if (Function == TPM_START_PROCESS_OPEN_LOC) {
+    /* Set the locality state to OPEN */
+    mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
+    goto exit;
+    /* Check if there was a request to close a locality */
+  } else if (Function == TPM_START_PROCESS_CLOSE_LOC) {
+    /* Set the locality state to CLOSED */
+    mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
+    goto exit;
+  }
+
+  /* Check if the locality is open */
+  if (mLocalityStates[Locality] == TPM_LOCALITY_CLOSED) {
+    DEBUG ((DEBUG_ERROR, "Locality Closed\n"));
+    ReturnVal = TPM2_FFA_ERROR_DENIED;
+    goto exit;
+  }
+
+  /* Check if we are processing a command */
   if (Function == TPM_START_PROCESS_CMD) {
     /* We should only proceed if the locality being requested matches that of the
      * current locality that is active. */
@@ -476,13 +507,17 @@ StartHandler (
       ReturnVal = TPM2_FFA_ERROR_INVARG;
       DEBUG ((DEBUG_ERROR, "Locality Mismatch\n"));
     }
+
+    /* Check if we are processing a locality request */
   } else if (Function == TPM_START_PROCESS_LOC_REQ) {
     ReturnVal = HandleLocalityRequest (Locality);
+    /* Otherwise, invalid function ID */
   } else {
     ReturnVal = TPM2_FFA_ERROR_INVARG;
     DEBUG ((DEBUG_ERROR, "Invalid Start Function\n"));
   }
 
+exit:
   /* Clean up the internal CRB at the given locality */
   CleanInternalCrb ();
 
@@ -585,9 +620,14 @@ TpmServiceInit (
     InitInternalCrb (Locality);
   }
 
-  /* TODO: Request Locality states from TFA */
+  /* Default the locality states */
   for (Locality = 0; Locality < NUM_LOCALITIES; Locality++) {
-    mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
+    /* Locality 0 and 1 are open by default */
+    if ((Locality == 0) || (Locality == 1)) {
+      mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
+    } else {
+      mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
+    }
   }
 
   /* Initialize the TPM Service State Translation Library. */

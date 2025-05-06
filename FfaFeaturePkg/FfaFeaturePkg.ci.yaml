@@ -75,22 +75,10 @@
         "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
         "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
         "ExtendWords": [
-          lodsd,
-          debugport,
-          infor,
-          valist,
-          premem,
-          uncacheable,
-          physmask,
-          PHYSBASE,
-          DEADLOOP,
-          LOGTELEMETRY,
-          DEBUGAGENT,
-          POSTMEM,
-          MMARM,
-          DDISABLE,
-          Deinitializes,
-          RQUUSE
+            "ddisable",
+            "deinitializes",
+            "rquuse",
+            "bsymbolic",
         ]
     },
 
