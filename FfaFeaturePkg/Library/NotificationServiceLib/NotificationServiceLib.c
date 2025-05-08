@@ -21,7 +21,7 @@
 #define MESSAGE_INFO_ID_MASK   (0x03)
 
 #define MAPPING_MIN  (0x01)
-#define MAPPING_MAX  (0x06)
+#define MAPPING_MAX  (0x07)
 
 /* Notification Service Structures */
 typedef struct {
@@ -79,7 +79,6 @@ IsMatchingCookie (
 
   @param  Unregister  Whether or not we are adding or removing bit information
   @param  Request     The incoming message containing the bit information
-  @param  Response    The outgoing message containing potential error information
   @param  Service     The service we are updating bit information for
 
   @retval NOTIFICATION_STATUS_SUCCESS           Success
@@ -91,7 +90,6 @@ NotificationStatus
 UpdateServiceInfo (
   BOOLEAN             Unregister,
   DIRECT_MSG_ARGS_EX  *Request,
-  DIRECT_MSG_ARGS_EX  *Response,
   NotifService        *Service
   )
 {
@@ -100,26 +98,22 @@ UpdateServiceInfo (
   UINT8                ReqNumMappings;
   NotificationMapping  *ReqMappings;
   UINT8                ReqMappingIndex;
-  UINT8                RespNumMappings;
-  NotificationMapping  *RespMappings;
   UINT16               MappingId;
   UINT32               Cookie;
   UINT8                PerVcpu;
   UINT8                EmptyIndex;
   BOOLEAN              EmptyFound;
+  NotifService         TempService;
+  UINT64               TempBitmask;
 
   /* Validate the incoming function parameters */
   if ((Request == NULL) || (Service == NULL)) {
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
-  /* Number of cookie/ID pairs = x11. Cookie/ID pairs = x12 (i.e. Arg7/Arg8) */
-  ReqNumMappings = Request->Arg7;
-  ReqMappings    = (NotificationMapping *)&Request->Arg8;
-
-  /* Response values, same location as above */
-  RespNumMappings = 0;
-  RespMappings    = (NotificationMapping *)&Response->Arg8;
+  /* Number of cookie/ID pairs = x10. Cookie/ID pairs = x11 (i.e. Arg6/Arg7) */
+  ReqNumMappings = Request->Arg6;
+  ReqMappings    = (NotificationMapping *)&Request->Arg7;
 
   /* You must be adding/removing at least one bit and no more than a transaction supports */
   if ((ReqNumMappings < MAPPING_MIN) || (ReqNumMappings > MAPPING_MAX)) {
@@ -127,14 +121,17 @@ UpdateServiceInfo (
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
-  ReturnVal = NOTIFICATION_STATUS_SUCCESS;
+  /* Copy the current service structure and global bitmask to the temporaries */
+  CopyMem (&TempService, Service, sizeof (NotifService));
+  TempBitmask = GlobalBitmask;
 
   /* Need to go through all of the setup bits and update the structure */
+  ReturnVal = NOTIFICATION_STATUS_SUCCESS;
   for (ReqMappingIndex = 0; ReqMappingIndex < ReqNumMappings; ReqMappingIndex++) {
     MappingId  = ReqMappings[ReqMappingIndex].Bits.Id;
     Cookie     = ReqMappings[ReqMappingIndex].Bits.Cookie;
     PerVcpu    = ReqMappings[ReqMappingIndex].Bits.PerVpcu;
-    FoundIndex = IsMatchingCookie (Cookie, Service);
+    FoundIndex = IsMatchingCookie (Cookie, &TempService);
 
     /* Check if we are doing an unregister */
     if (Unregister) {
@@ -142,30 +139,33 @@ UpdateServiceInfo (
       if (FoundIndex == NOTIFICATION_NOT_FOUND) {
         DEBUG ((DEBUG_ERROR, "Invalid Unregister - Cookie: %x Not Registered\n", Cookie));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
         /* If the IDs do not match, it is an error */
-      } else if (Service->ServiceInfo[FoundIndex].Id != MappingId) {
+      } else if (TempService.ServiceInfo[FoundIndex].Id != MappingId) {
         DEBUG ((
           DEBUG_ERROR,
           "Invalid Unregister - ID Registered: %x Mismatch\n",
-          Service->ServiceInfo[FoundIndex].Id
+          TempService.ServiceInfo[FoundIndex].Id
           ));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
         /* If the Source IDs do not match, it is an error */
-      } else if (Service->ServiceInfo[FoundIndex].SourceId != Request->SourceId) {
+      } else if (TempService.ServiceInfo[FoundIndex].SourceId != Request->SourceId) {
         DEBUG ((
           DEBUG_ERROR,
           "Invalid Unregister - Source ID: %x Mismatch\n",
-          Service->ServiceInfo[FoundIndex].SourceId
+          TempService.ServiceInfo[FoundIndex].SourceId
           ));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
         /* Otherwise, clear the data */
       } else {
-        Service->ServiceInfo[FoundIndex].Cookie   = 0;
-        Service->ServiceInfo[FoundIndex].Id       = 0;
-        Service->ServiceInfo[FoundIndex].InUse    = FALSE;
-        Service->ServiceInfo[FoundIndex].PerVcpu  = FALSE;
-        Service->ServiceInfo[FoundIndex].SourceId = 0;
-        GlobalBitmask                            &= ~(1 << MappingId);
+        TempService.ServiceInfo[FoundIndex].Cookie   = 0;
+        TempService.ServiceInfo[FoundIndex].Id       = 0;
+        TempService.ServiceInfo[FoundIndex].InUse    = FALSE;
+        TempService.ServiceInfo[FoundIndex].PerVcpu  = FALSE;
+        TempService.ServiceInfo[FoundIndex].SourceId = 0;
+        TempBitmask                                 &= ~(1 << MappingId);
       }
 
       /* Otherwise, we are doing a register */
@@ -174,16 +174,18 @@ UpdateServiceInfo (
       if (FoundIndex != NOTIFICATION_NOT_FOUND) {
         DEBUG ((DEBUG_ERROR, "Invalid Register - Cookie: %x Already Registered\n", Cookie));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
-        /* If the GlobalBitmask bit is set, it is an error */
-      } else if (GlobalBitmask & (1 << MappingId)) {
+        break;
+        /* If the Bitmask bit is set, it is an error */
+      } else if (TempBitmask & (1 << MappingId)) {
         DEBUG ((DEBUG_ERROR, "Invalid Register - ID: %x Already Registered\n", MappingId));
         ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
+        break;
         /* Otherwise, set the data */
       } else {
         /* Need to loop through the bits within the structure and find an empty location */
         EmptyFound = FALSE;
         for (EmptyIndex = 0; EmptyIndex < NOTIFICATION_MAX_MAPPINGS; EmptyIndex++) {
-          if (!Service->ServiceInfo[EmptyIndex].InUse) {
+          if (!TempService.ServiceInfo[EmptyIndex].InUse) {
             EmptyFound = TRUE;
             break;
           }
@@ -193,29 +195,26 @@ UpdateServiceInfo (
         if (!EmptyFound) {
           DEBUG ((DEBUG_ERROR, "Register Failed - No Memory Available\n"));
           ReturnVal = NOTIFICATION_STATUS_NO_MEM;
+          break;
           /* Otherwise, update the data */
         } else {
-          Service->ServiceInfo[EmptyIndex].Cookie   = Cookie;
-          Service->ServiceInfo[EmptyIndex].Id       = MappingId;
-          Service->ServiceInfo[EmptyIndex].InUse    = TRUE;
-          Service->ServiceInfo[EmptyIndex].PerVcpu  = (PerVcpu) ? TRUE : FALSE;
-          Service->ServiceInfo[EmptyIndex].SourceId = Request->SourceId;
-          GlobalBitmask                            |= (1 << MappingId);
+          TempService.ServiceInfo[EmptyIndex].Cookie   = Cookie;
+          TempService.ServiceInfo[EmptyIndex].Id       = MappingId;
+          TempService.ServiceInfo[EmptyIndex].InUse    = TRUE;
+          TempService.ServiceInfo[EmptyIndex].PerVcpu  = (PerVcpu) ? TRUE : FALSE;
+          TempService.ServiceInfo[EmptyIndex].SourceId = Request->SourceId;
+          TempBitmask                                 |= (1 << MappingId);
         }
       }
     }
 
-    /* Update the response if something went wrong */
-    if (ReturnVal != NOTIFICATION_STATUS_SUCCESS) {
-      RespMappings[RespNumMappings].Uint64         = ReqMappings[ReqMappingIndex].Uint64;
-      RespMappings[RespNumMappings].Bits.ErrorCode = ReturnVal;
-      RespNumMappings++;
-      ReturnVal = NOTIFICATION_STATUS_PARTIAL;
+    /* Copy the temporaries back if everything was successful */
+    if (ReturnVal == NOTIFICATION_STATUS_SUCCESS) {
+      CopyMem (Service, &TempService, sizeof (NotifService));
+      GlobalBitmask = TempBitmask;
     }
   }
 
-  /* Update the number of response mappings */
-  Response->Arg7 = RespNumMappings;
   return ReturnVal;
 }
 
@@ -273,10 +272,9 @@ RegisterHandler (
 
   /* Check for a valid UUID */
   if (Service != NULL) {
-    ReturnVal = UpdateServiceInfo (FALSE, Request, Response, Service);
-    /* Check if the update was successful or partially successful and this was a new addition */
-    if (((ReturnVal == NOTIFICATION_STATUS_SUCCESS) || (ReturnVal == NOTIFICATION_STATUS_PARTIAL)) &&
-        (!Service->InUse))
+    ReturnVal = UpdateServiceInfo (FALSE, Request, Service);
+    /* Check if the update was successful and this was a new addition */
+    if ((ReturnVal == NOTIFICATION_STATUS_SUCCESS) && (!Service->InUse))
     {
       /* Update the UUID and set the location to InUse */
       CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
@@ -333,7 +331,7 @@ UnregisterHandler (
 
   /* Check for a valid UUID */
   if (Service != NULL) {
-    ReturnVal = UpdateServiceInfo (TRUE, Request, Response, Service);
+    ReturnVal = UpdateServiceInfo (TRUE, Request, Service);
   } else {
     DEBUG ((DEBUG_ERROR, "Service Unregister Failed - Error Code: %d\n", ReturnVal));
   }
@@ -408,6 +406,13 @@ NotificationServiceHandle (
       /* Update the error code */
       Response->Arg6 = NOTIFICATION_STATUS_NOT_SUPPORTED;
       DEBUG ((DEBUG_ERROR, "Add/Remove Unsupported\n"));
+      break;
+
+    case NOTIFICATION_OPCODE_MEM_ASSIGN:
+    case NOTIFICATION_OPCODE_MEM_UNASSIGN:
+      /* Update the error code */
+      Response->Arg6 = NOTIFICATION_STATUS_NOT_SUPPORTED;
+      DEBUG ((DEBUG_ERROR, "Memory Assign/Unassign Unsupported\n"));
       break;
 
     case NOTIFICATION_OPCODE_REGISTER:
