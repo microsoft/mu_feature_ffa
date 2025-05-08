@@ -274,8 +274,7 @@ RegisterHandler (
   if (Service != NULL) {
     ReturnVal = UpdateServiceInfo (FALSE, Request, Service);
     /* Check if the update was successful and this was a new addition */
-    if ((ReturnVal == NOTIFICATION_STATUS_SUCCESS) && (!Service->InUse))
-    {
+    if ((ReturnVal == NOTIFICATION_STATUS_SUCCESS) && (!Service->InUse)) {
       /* Update the UUID and set the location to InUse */
       CopyMem (Service->ServiceUuid, Uuid, sizeof (Uuid));
       Service->InUse = TRUE;

@@ -508,6 +508,7 @@ StartHandler (
       ReturnVal = TPM2_FFA_ERROR_INVARG;
       DEBUG ((DEBUG_ERROR, "Locality Mismatch\n"));
     }
+
     /* Check if we are processing a locality request */
   } else if (Function == TPM2_FFA_START_FUNC_QUALIFIER_LOCALITY) {
     ReturnVal = HandleLocalityRequest (Locality);

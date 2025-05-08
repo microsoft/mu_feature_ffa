@@ -235,8 +235,8 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 1;
   DirectMsgArgsEx.Arg8 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
-  Mapping.Bits.Cookie   = 2;
-  Mapping.Bits.Id       = 2;
+  Mapping.Bits.Cookie  = 2;
+  Mapping.Bits.Id      = 2;
   DirectMsgArgsEx.Arg9 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie   = 3;
@@ -279,8 +279,8 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 6;
   DirectMsgArgsEx.Arg8 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
-  Mapping.Bits.Cookie   = 2;
-  Mapping.Bits.Id       = 7;
+  Mapping.Bits.Cookie  = 2;
+  Mapping.Bits.Id      = 7;
   DirectMsgArgsEx.Arg9 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
@@ -486,7 +486,7 @@ FfaPartitionTestAppEntry (
   /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
   /* Do not set UUID in x7-x8 (i.e. Arg3-Arg4) - Invalid */
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
-  Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
+  Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     goto Done;
