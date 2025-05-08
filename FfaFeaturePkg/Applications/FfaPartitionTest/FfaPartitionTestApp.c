@@ -225,28 +225,27 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb710b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 0;
   Mapping.Bits.Id      = 0;
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie  = 1;
   Mapping.Bits.Id      = 1;
-  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie   = 2;
   Mapping.Bits.Id       = 2;
-  DirectMsgArgsEx.Arg10 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie   = 3;
   Mapping.Bits.Id       = 3;
-  DirectMsgArgsEx.Arg11 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg10 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie   = 4;
   Mapping.Bits.Id       = 4;
-  DirectMsgArgsEx.Arg12 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg11 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -255,7 +254,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Battery Service Register Success\n"));
@@ -270,20 +269,19 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 0;
   Mapping.Bits.Id      = 5;
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie  = 1;
   Mapping.Bits.Id      = 6;
-  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Mapping.Bits.Cookie   = 2;
   Mapping.Bits.Id       = 7;
-  DirectMsgArgsEx.Arg10 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg9 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -292,7 +290,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Register Success\n"));
@@ -307,12 +305,11 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 2; // Duplicate Cookie
   Mapping.Bits.Id      = 8; // Different ID
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -321,7 +318,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Duplicate Cookie Success\n"));
@@ -336,12 +333,11 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 3; // Different Cookie
   Mapping.Bits.Id      = 7; // Duplicate ID
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -350,7 +346,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Duplicate ID Success\n"));
@@ -364,8 +360,7 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = 0x00; // Invalid
+  DirectMsgArgsEx.Arg6 = 0x00; // Invalid
   Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -373,7 +368,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Mapping Count MIN Success\n"));
@@ -387,8 +382,7 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = 0x7; // Invalid
+  DirectMsgArgsEx.Arg6 = 0x7; // Invalid
   Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -396,7 +390,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Register Invalid Mapping Count MAX Success\n"));
@@ -411,12 +405,11 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 1;
   Mapping.Bits.Id      = 6;
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -425,7 +418,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Unregister Success\n"));
@@ -440,12 +433,11 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 1;
   Mapping.Bits.Id      = 6;
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -454,7 +446,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Unregister Invalid Cookie Success\n"));
@@ -469,12 +461,11 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
-  DirectMsgArgsEx.Arg7 = NumMappings;
+  DirectMsgArgsEx.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
   Mapping.Bits.Cookie  = 0;
   Mapping.Bits.Id      = 0;
-  DirectMsgArgsEx.Arg8 = Mapping.Uint64;
+  DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
@@ -483,7 +474,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Thermal Service Unregister Invalid Cookie/ID Mismatch Success\n"));
@@ -495,7 +486,6 @@ FfaPartitionTestAppEntry (
   /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
   /* Do not set UUID in x7-x8 (i.e. Arg3-Arg4) - Invalid */
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
-  /* x10 (i.e. Arg6) should be 0 */
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -503,7 +493,7 @@ FfaPartitionTestAppEntry (
   }
 
   if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgsEx.Arg0));
+    DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
     DEBUG ((DEBUG_INFO, "Unregister Invalid Service UUID Success\n"));
