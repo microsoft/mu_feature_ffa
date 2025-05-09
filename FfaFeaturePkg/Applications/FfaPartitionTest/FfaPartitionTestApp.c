@@ -382,7 +382,7 @@ FfaPartitionTestAppEntry (
   DirectMsgArgsEx.Arg3 = 0xba7aff2eb1eac765;
   DirectMsgArgsEx.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgsEx.Arg5 = NOTIFICATION_OPCODE_REGISTER;
-  DirectMsgArgsEx.Arg6 = 0x7; // Invalid
+  DirectMsgArgsEx.Arg6 = 0x8; // Invalid
   Status               = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
