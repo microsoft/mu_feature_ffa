@@ -231,22 +231,27 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 0;
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Mapping.Bits.Cookie  = 1;
   Mapping.Bits.Id      = 1;
   DirectMsgArgsEx.Arg8 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg8));
   Mapping.Bits.Cookie  = 2;
   Mapping.Bits.Id      = 2;
   DirectMsgArgsEx.Arg9 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg9));
   Mapping.Bits.Cookie   = 3;
   Mapping.Bits.Id       = 3;
   DirectMsgArgsEx.Arg10 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg10));
   Mapping.Bits.Cookie   = 4;
   Mapping.Bits.Id       = 4;
   DirectMsgArgsEx.Arg11 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg11));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -275,14 +280,17 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 5;
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Mapping.Bits.Cookie  = 1;
   Mapping.Bits.Id      = 6;
   DirectMsgArgsEx.Arg8 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg8));
   Mapping.Bits.Cookie  = 2;
   Mapping.Bits.Id      = 7;
   DirectMsgArgsEx.Arg9 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg9));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -311,6 +319,7 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 8; // Different ID
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -339,6 +348,7 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 7; // Duplicate ID
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -411,6 +421,7 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 6;
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -439,6 +450,7 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 6;
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
@@ -467,6 +479,7 @@ FfaPartitionTestAppEntry (
   Mapping.Bits.Id      = 0;
   DirectMsgArgsEx.Arg7 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
+  DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgsEx.Arg7));
   Status = FfaMessageSendDirectReq2 (FfaTestPartInfo.PartitionId, &gEfiNotificationServiceFfaGuid, &DirectMsgArgsEx);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));

@@ -28,11 +28,11 @@
 #pragma pack (1)
 typedef union {
   struct {
-    UINTN    Cookie    : 32;
-    UINTN    Reserved  : 14;
-    UINTN    ErrorCode : 8;
-    UINTN    PerVpcu   : 1;
     UINTN    Id        : 9;
+    UINTN    PerVpcu   : 1;
+    UINTN    ErrorCode : 8;
+    UINTN    Reserved  : 14;
+    UINTN    Cookie    : 32;
   } Bits;
   UINTN    Uint64;
 } NotificationMapping;
