@@ -20,8 +20,12 @@
 #define MESSAGE_INFO_DIR_RESP  (0x100)
 #define MESSAGE_INFO_ID_MASK   (0x03)
 
+#define RETURN_STATUS_MASK  (0xFF)
+
 #define MAPPING_MIN  (0x01)
 #define MAPPING_MAX  (0x07)
+
+#define PER_VCPU_BIT_POS  (0)
 
 /* Notification Service Structures */
 typedef struct {
@@ -130,7 +134,7 @@ UpdateServiceInfo (
   for (ReqMappingIndex = 0; ReqMappingIndex < ReqNumMappings; ReqMappingIndex++) {
     MappingId  = ReqMappings[ReqMappingIndex].Bits.Id;
     Cookie     = ReqMappings[ReqMappingIndex].Bits.Cookie;
-    PerVcpu    = ReqMappings[ReqMappingIndex].Bits.PerVpcu;
+    PerVcpu    = ReqMappings[ReqMappingIndex].Bits.PerVcpu;
     FoundIndex = IsMatchingCookie (Cookie, &TempService);
 
     /* Check if we are doing an unregister */
@@ -219,6 +223,49 @@ UpdateServiceInfo (
 }
 
 /**
+  Searches the NotificationServices structure for the provided UUID or an
+  empty location to place a new service.
+
+  @param  Uuid        The UUID to search for
+  @param  LocateEmpty Whether or not to search for an empty location
+
+  @retval A pointer to the service that matches the UUID, an empty location
+          or NULL if no match could be found.
+
+**/
+STATIC
+NotifService *
+LocateService (
+  UINT8    *Uuid,
+  BOOLEAN  LocateEmpty
+  )
+{
+  UINT8         Index;
+  NotifService  *Service;
+
+  Service = NULL;
+
+  /* Traverse the NotificationServices structure */
+  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
+    /* If looking for a UUID, check if the service is marked as InUse */
+    if (!LocateEmpty && NotificationServices[Index].InUse) {
+      /* Check if the UUID matches */
+      if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
+        Service = &NotificationServices[Index];
+        break;
+      }
+
+      /* If looking for an empty location, check if the service is not marked as InUse */
+    } else if (LocateEmpty && !NotificationServices[Index].InUse) {
+      Service = &NotificationServices[Index];
+      break;
+    }
+  }
+
+  return Service;
+}
+
+/**
   Handler for Notification Register command
 
   @param  Request   The incoming message
@@ -232,42 +279,24 @@ UpdateServiceInfo (
 STATIC
 NotificationStatus
 RegisterHandler (
-  DIRECT_MSG_ARGS_EX  *Request,
-  DIRECT_MSG_ARGS_EX  *Response
+  DIRECT_MSG_ARGS_EX  *Request
   )
 {
-  UINT8               Index;
   NotifService        *Service;
   UINT8               Uuid[16];
   NotificationStatus  ReturnVal;
 
-  Service   = NULL;
   ReturnVal = NOTIFICATION_STATUS_NO_MEM;
 
   /* Extract the UUID from the message x7-x8 (i.e. Arg3-Arg4) */
   NotificationServiceExtractUuid (Request->Arg3, Request->Arg4, Uuid);
 
-  /* Attempt to find the UUID within our list */
-  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    /* Check if the service is marked as InUse */
-    if (NotificationServices[Index].InUse) {
-      /* Check if the UUID matches */
-      if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
-        Service = &NotificationServices[Index];
-        break;
-      }
-    }
-  }
+  /* Attempt to locate the service via the UUID provided */
+  Service = LocateService (Uuid, FALSE);
 
   /* The UUID was not found in the list, attempt to find an empty location to add it */
   if (Service == NULL) {
-    for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-      if (!NotificationServices[Index].InUse) {
-        /* Temporarily point to the empty location */
-        Service = &NotificationServices[Index];
-        break;
-      }
-    }
+    Service = LocateService (Uuid, TRUE);
   }
 
   /* Check for a valid UUID */
@@ -283,8 +312,6 @@ RegisterHandler (
     DEBUG ((DEBUG_ERROR, "Service Register Failed - Error Code: %d\n", ReturnVal));
   }
 
-  /* Update the error code */
-  Response->Arg6 = ReturnVal;
   return ReturnVal;
 }
 
@@ -301,32 +328,20 @@ RegisterHandler (
 STATIC
 NotificationStatus
 UnregisterHandler (
-  DIRECT_MSG_ARGS_EX  *Request,
-  DIRECT_MSG_ARGS_EX  *Response
+  DIRECT_MSG_ARGS_EX  *Request
   )
 {
-  UINT8               Index;
   NotifService        *Service;
   UINT8               Uuid[16];
   NotificationStatus  ReturnVal;
 
-  Service   = NULL;
   ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
   /* Extract the UUID from the message x7-x8 (i.e. Arg3-Arg4) */
   NotificationServiceExtractUuid (Request->Arg3, Request->Arg4, Uuid);
 
-  /* Attempt to find the UUID within our list */
-  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    /* Check if the service is marked as InUse */
-    if (NotificationServices[Index].InUse) {
-      /* Check if the UUID matches */
-      if (!CompareMem (Uuid, NotificationServices[Index].ServiceUuid, sizeof (Uuid))) {
-        Service = &NotificationServices[Index];
-        break;
-      }
-    }
-  }
+  /* Attempt to locate the service via the UUID provided */
+  Service = LocateService (Uuid, FALSE);
 
   /* Check for a valid UUID */
   if (Service != NULL) {
@@ -335,8 +350,6 @@ UnregisterHandler (
     DEBUG ((DEBUG_ERROR, "Service Unregister Failed - Error Code: %d\n", ReturnVal));
   }
 
-  /* Update the error code */
-  Response->Arg6 = ReturnVal;
   return ReturnVal;
 }
 
@@ -349,15 +362,11 @@ NotificationServiceInit (
   VOID
   )
 {
-  UINT8  Index;
-
   /* Initialize Global Bitmask */
   GlobalBitmask = 0;
 
   /* Initialize the Notification Service structure */
-  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    SetMem (&NotificationServices[Index], sizeof (NotifService), 0);
-  }
+  ZeroMem (&NotificationServices[0], sizeof (NotificationServices));
 }
 
 /**
@@ -385,6 +394,8 @@ NotificationServiceHandle (
   DIRECT_MSG_ARGS_EX  *Response
   )
 {
+  NotificationStatus  ReturnVal;
+
   /* Validate the input parameters before attempting to dereference or pass them along */
   if ((Request == NULL) || (Response == NULL)) {
     return;
@@ -402,34 +413,32 @@ NotificationServiceHandle (
   switch (Request->Arg5 & MESSAGE_INFO_ID_MASK) {
     case NOTIFICATION_OPCODE_ADD:
     case NOTIFICATION_OPCODE_REMOVE:
-      /* Update the error code */
-      Response->Arg6 = NOTIFICATION_STATUS_NOT_SUPPORTED;
+      ReturnVal = NOTIFICATION_STATUS_NOT_SUPPORTED;
       DEBUG ((DEBUG_ERROR, "Add/Remove Unsupported\n"));
       break;
 
     case NOTIFICATION_OPCODE_MEM_ASSIGN:
     case NOTIFICATION_OPCODE_MEM_UNASSIGN:
-      /* Update the error code */
-      Response->Arg6 = NOTIFICATION_STATUS_NOT_SUPPORTED;
+      ReturnVal = NOTIFICATION_STATUS_NOT_SUPPORTED;
       DEBUG ((DEBUG_ERROR, "Memory Assign/Unassign Unsupported\n"));
       break;
 
     case NOTIFICATION_OPCODE_REGISTER:
-      RegisterHandler (Request, Response);
+      ReturnVal = RegisterHandler (Request);
       break;
 
     case NOTIFICATION_OPCODE_UNREGISTER:
-      UnregisterHandler (Request, Response);
+      ReturnVal = UnregisterHandler (Request);
       break;
 
     default:
-      /* Update the error code */
-      Response->Arg6 = NOTIFICATION_STATUS_INVALID_PARAMETER;
+      ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
       DEBUG ((DEBUG_ERROR, "Invalid Notification Service Opcode\n"));
       break;
   }
 
-  /* If applicable, x10-x17 (i.e. Arg6-Arg13) will be set in the handler function */
+  /* Update the return status - Bits[0:7] of x10 (i.e. Arg6) */
+  Response->Arg6 = (((UINTN)(UINT8)ReturnVal) & RETURN_STATUS_MASK);
 }
 
 /**
@@ -461,34 +470,21 @@ NotificationServiceIdSet (
     return NOTIFICATION_STATUS_INVALID_PARAMETER;
   }
 
-  Service   = NULL;
   ReturnVal = NOTIFICATION_STATUS_INVALID_PARAMETER;
 
-  /* Attempt to find the UUID within our list */
-  for (Index = 0; Index < NOTIFICATION_MAX_SERVICES; Index++) {
-    /* Check if the service is marked as InUse */
-    if (NotificationServices[Index].InUse) {
-      /* Check if the UUID matches */
-      if (!CompareMem (
-             ServiceUuid,
-             NotificationServices[Index].ServiceUuid,
-             sizeof (NotificationServices[Index].ServiceUuid)
-             ))
-      {
-        Service = &NotificationServices[Index];
-        break;
-      }
-    }
-  }
+  /* Attempt to locate the service via the UUID provided */
+  Service = LocateService (ServiceUuid, FALSE);
 
-  /* UUID was found */
+  /* Check for a valid UUID */
   if (Service != NULL) {
     /* Attempt to find the cookie within the mapped list */
     for (Index = 0; Index < NOTIFICATION_MAX_MAPPINGS; Index++) {
       if (Service->ServiceInfo[Index].Cookie == Cookie) {
         Bitmask = (1 << Service->ServiceInfo[Index].Id);
-        /* TODO: Figure out how we are going to do PerVcpu setup */
-        // Flag |= (Service->ServiceInfo[Index].PerVcpu);
+        if (Service->ServiceInfo[Index].PerVcpu) {
+          Flag |= (1 << PER_VCPU_BIT_POS);
+        }
+
         Status = FfaNotificationSet (Service->ServiceInfo[Index].SourceId, Flag, Bitmask);
         if (!EFI_ERROR (Status)) {
           ReturnVal = NOTIFICATION_STATUS_SUCCESS;

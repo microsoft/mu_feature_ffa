@@ -14,7 +14,7 @@
 #include <Library/ArmSvcLib.h>
 #include <Library/ArmFfaLibEx.h>
 
-typedef INT32 NotificationStatus;
+typedef INT8 NotificationStatus;
 
 /**
   Initializes the Notification service

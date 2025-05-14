@@ -100,6 +100,7 @@ FfaPartitionTestAppEntry (
   NotificationMapping     Mapping;
   UINT8                   NumMappings;
   UINT16                  BindBitPos;
+  INT8                    ResponseVal;
 
   // Query FF-A version to make sure FF-A is supported
   Status = ArmFfaLibGetVersion (
@@ -258,7 +259,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -297,7 +299,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -326,7 +329,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -355,7 +359,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -377,7 +382,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -399,7 +405,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -428,7 +435,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_SUCCESS) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -457,7 +465,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -486,7 +495,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
@@ -505,7 +515,8 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  if (DirectMsgArgsEx.Arg6 != NOTIFICATION_STATUS_INVALID_PARAMETER) {
+  ResponseVal = (INT8)DirectMsgArgsEx.Arg6;
+  if (ResponseVal != NOTIFICATION_STATUS_INVALID_PARAMETER) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %d\n", DirectMsgArgsEx.Arg6));
     goto Done;
   } else {
