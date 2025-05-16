@@ -32,8 +32,7 @@
 #define TPM_MAJOR_VER  (0x1)
 #define TPM_MINOR_VER  (0x0)
 
-#define TPM_START_PROCESS_CMD        (0x0)
-#define TPM_START_PROCESS_LOC_REQ    (0x1)
+/* TODO: Temporary Solution - May move to Tpm2ServiceFfa.h */
 #define TPM_START_PROCESS_OPEN_LOC   (0x100)
 #define TPM_START_PROCESS_CLOSE_LOC  (0x101)
 
@@ -476,6 +475,8 @@ StartHandler (
     goto exit;
   }
 
+  /* TODO: Temporary solution*/
+
   /* NOTE: The following commands should only be coming
    *       from TF-A. */
   /* Check if there was a request to open a locality */
@@ -498,7 +499,7 @@ StartHandler (
   }
 
   /* Check if we are processing a command */
-  if (Function == TPM_START_PROCESS_CMD) {
+  if (Function == TPM2_FFA_START_FUNC_QUALIFIER_COMMAND) {
     /* We should only proceed if the locality being requested matches that of the
      * current locality that is active. */
     if (Locality == mActiveLocality) {
@@ -509,7 +510,7 @@ StartHandler (
     }
 
     /* Check if we are processing a locality request */
-  } else if (Function == TPM_START_PROCESS_LOC_REQ) {
+  } else if (Function == TPM2_FFA_START_FUNC_QUALIFIER_LOCALITY) {
     ReturnVal = HandleLocalityRequest (Locality);
     /* Otherwise, invalid function ID */
   } else {
