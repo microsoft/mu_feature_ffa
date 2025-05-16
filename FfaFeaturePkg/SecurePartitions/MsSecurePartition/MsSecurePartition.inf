@@ -43,7 +43,6 @@
   TestServiceLib
 
 [Guids]
-  gMmCoreDataHobGuid
   gEfiTpm2ServiceFfaGuid
   gEfiNotificationServiceFfaGuid
   gEfiTestServiceFfaGuid
