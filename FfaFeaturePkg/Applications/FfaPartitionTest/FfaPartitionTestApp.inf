@@ -39,7 +39,6 @@
   UefiApplicationEntryPoint
   UefiLib
   ArmSmcLib
-  ArmGicLib
   ArmFfaLib
   ArmFfaLibEx
   UefiBootServicesTableLib
