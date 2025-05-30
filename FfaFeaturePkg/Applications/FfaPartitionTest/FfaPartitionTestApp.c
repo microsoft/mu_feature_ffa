@@ -28,9 +28,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UnitTestLib.h>
 #include <Guid/NotificationServiceFfa.h>
 #include <Guid/TestServiceFfa.h>
 #include <Guid/Tpm2ServiceFfa.h>
+
+#define UNIT_TEST_APP_NAME     "FF-A Functional Test"
+#define UNIT_TEST_APP_VERSION  "0.2"
 
 UINT16                           FfaPartId;
 EFI_HARDWARE_INTERRUPT_PROTOCOL  *gInterrupt;
@@ -70,6 +74,55 @@ ApIrqInterruptHandler (
   gInterrupt->EndOfInterrupt (gInterrupt, Source);
 }
 
+/// ================================================================================================
+/// ================================================================================================
+///
+/// TEST CASES
+///
+/// ================================================================================================
+/// ================================================================================================
+
+/**
+  This routine queries the version of FF-A framework, it must be at least the version
+  required by this UEFI codebase.
+**/
+UNIT_TEST_STATUS
+EFIAPI
+FfaMiscVerifyVersion (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  UNIT_TEST_STATUS  utStatus = UNIT_TEST_RUNNING;
+  EFI_STATUS        Status   = EFI_SUCCESS;
+  UINT16            CurrentMajorVersion;
+  UINT16            CurrentMinorVersion;
+
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
+
+  // Query FF-A version to make sure FF-A is supported
+  Status = ArmFfaLibGetVersion (
+             ARM_FFA_MAJOR_VERSION,
+             ARM_FFA_MINOR_VERSION,
+             &CurrentMajorVersion,
+             &CurrentMinorVersion
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to get FF-A version. Status: %r\n", Status));
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+  }
+
+  DEBUG ((DEBUG_INFO, "%a FF-A version: %d.%d\n", __func__, CurrentMajorVersion, CurrentMinorVersion));
+
+  UT_ASSERT_TRUE (
+    (CurrentMajorVersion >= ARM_FFA_MAJOR_VERSION) &&
+    (CurrentMinorVersion >= ARM_FFA_MINOR_VERSION)
+    );
+
+  utStatus = UNIT_TEST_PASSED;
+  UT_LOG_INFO ("FF-A version is supported: %d.%d", CurrentMajorVersion, CurrentMinorVersion);
+  return utStatus;
+}
+
 /**
   FfaPartitionTestAppEntry
 
@@ -88,6 +141,47 @@ FfaPartitionTestAppEntry (
   )
 {
   EFI_STATUS              Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw             = NULL;
+  UNIT_TEST_SUITE_HANDLE      Misc           = NULL;
+
+  DEBUG ((DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+
+  // Start setting up the test framework for running the tests.
+  Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a Failed in InitUnitTestFramework. Status = %r\n", __FUNCTION__, Status));
+    goto Cleanup;
+  }
+
+  // Misc test suite for all tests.
+  CreateUnitTestSuite (&Misc, Fw, "FF-A Miscellaneous Test cases", "Ffa.Miscellaneous", NULL, NULL);
+
+  if (Misc == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Cleanup;
+  }
+
+  AddTestCase (
+    Misc,
+    "Verify FF-A framework version",
+    "Ffa.Miscellaneous.VerifyVersion",
+    FfaMiscVerifyVersion,
+    NULL,
+    NULL,
+    NULL
+    );
+
+  AddTestCase (
+    Misc,
+    "Fatal error Ex report",
+    "MsWhea.Miscellaneous.MsWheaFatalExEntries",
+    FfaTestGetVersion,
+    NULL,
+    NULL,
+    NULL
+    );
+
   ARM_SMC_ARGS            SmcArgs;
   EFI_FFA_PART_INFO_DESC  FfaTestPartInfo;
   UINT32                  Count;
@@ -101,18 +195,6 @@ FfaPartitionTestAppEntry (
   UINT8                   NumMappings;
   UINT16                  BindBitPos;
   INT8                    ResponseVal;
-
-  // Query FF-A version to make sure FF-A is supported
-  Status = ArmFfaLibGetVersion (
-             ARM_FFA_MAJOR_VERSION,
-             ARM_FFA_MINOR_VERSION,
-             &CurrentMajorVersion,
-             &CurrentMinorVersion
-             );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to get FF-A version. Status: %r\n", Status));
-    goto Done;
-  }
 
   // FF-A is supported, then discover the Ffa Test SP's presence, ID, our ID and
   // retrieve our RX/TX buffers.
