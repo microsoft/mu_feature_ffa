@@ -25,7 +25,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ArmLib.h>
 #include <Library/ArmFfaLib.h>
 #include <Library/ArmFfaLibEx.h>
-#include <Library/ArmGicLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>

@@ -5,7 +5,7 @@
 #
 #**/
 
-#Override : 00000002 | ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf | 58303544f83e8852318d47fc574055cf | 2025-02-15T01-26-20 | d3e78a0eb97d637432a56655052d842879f36922
+#Override : 00000002 | ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf | db71fa8c3bf46f20bcc0119303b854e6 | 2025-05-16T06-15-04 | 1abd9da5b6f5c85089b20eae81285d978709c9bc
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -14,7 +14,6 @@
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = TimerLib
-  CONSTRUCTOR                    = TimerConstructorEx
 
 [Sources.common]
   ArmArchTimerLibEx.c
@@ -29,6 +28,3 @@
   ArmLib
   BaseLib
   ArmGenericTimerCounterLib
-
-[Pcd]
-  gArmTokenSpaceGuid.PcdArmArchTimerFreqInHz
