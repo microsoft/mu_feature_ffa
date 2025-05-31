@@ -27,9 +27,11 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   ArmPkg/ArmPkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -43,9 +45,11 @@
   ArmFfaLib
   ArmFfaLibEx
   UefiBootServicesTableLib
+  UnitTestLib
 
 [Protocols]
   gHardwareInterruptProtocolGuid
+  gEfiMmCommunication2ProtocolGuid
 
 [FixedPcd]
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
@@ -58,3 +62,4 @@
   gEfiTpm2ServiceFfaGuid
   gEfiNotificationServiceFfaGuid
   gEfiTestServiceFfaGuid
+  gZeroGuid
