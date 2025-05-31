@@ -38,15 +38,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_VERSION  "0.1"
 
 typedef struct {
-  BOOLEAN  IsMmCommunicationServiceAvailable;
-  BOOLEAN  IsTestServiceAvailable;
-  BOOLEAN  IsTpm2ServiceAvailable;
-  BOOLEAN  IsNotificationServiceAvailable;
-  UINT16   FfaMmCommunicationPartId;
-  UINT16   FfaTestServicePartId;
-  UINT16   FfaTpm2ServicePartId;
-  UINT16   FfaNotificationServicePartId;
-  UINTN    SriIndex;
+  BOOLEAN    IsMmCommunicationServiceAvailable;
+  BOOLEAN    IsTestServiceAvailable;
+  BOOLEAN    IsTpm2ServiceAvailable;
+  BOOLEAN    IsNotificationServiceAvailable;
+  UINT16     FfaMmCommunicationPartId;
+  UINT16     FfaTestServicePartId;
+  UINT16     FfaTpm2ServicePartId;
+  UINT16     FfaNotificationServicePartId;
+  UINTN      SriIndex;
 } FFA_TEST_CONTEXT;
 
 UINT16                           FfaPartId;
@@ -185,12 +185,12 @@ CheckTPMService (
     DEBUG ((DEBUG_INFO, "%a: TPM2 Service not available, skipping test.\n", __func__));
     utStatus = UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   } else {
-#ifdef TPM2_ENABLE
+ #ifdef TPM2_ENABLE
     utStatus = UNIT_TEST_PASSED;
-#else
+ #else
     DEBUG ((DEBUG_INFO, "%a: TPM2 Service is not enabled, skipping test.\n", __func__));
     utStatus = UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
-#endif // TPM2_ENABLE
+ #endif // TPM2_ENABLE
   }
 
   return utStatus;
@@ -254,13 +254,13 @@ FfaMiscGetPartitionInfoRegs (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS                Status   = EFI_SUCCESS;
-  EFI_FFA_PART_INFO_DESC    FfaPartInfo;
-  ARM_SMC_ARGS              SmcArgs;
-  UINT32                    Count;
-  UINTN                     Index;
-  FFA_TEST_CONTEXT          *FfaTestContext;
-  EFI_GUID                  *GuidsOfInterest[] = {
+  EFI_STATUS              Status = EFI_SUCCESS;
+  EFI_FFA_PART_INFO_DESC  FfaPartInfo;
+  ARM_SMC_ARGS            SmcArgs;
+  UINT32                  Count;
+  UINTN                   Index;
+  FFA_TEST_CONTEXT        *FfaTestContext;
+  EFI_GUID                *GuidsOfInterest[] = {
     &gEfiMmCommunication2ProtocolGuid,
     &gEfiTestServiceFfaGuid,
     &gEfiTpm2ServiceFfaGuid,
@@ -299,7 +299,7 @@ FfaMiscGetPartitionInfoRegs (
         UT_ASSERT_NOT_EFI_ERROR (Status);
       } else {
         FfaTestContext->IsMmCommunicationServiceAvailable = TRUE;
-        FfaTestContext->FfaMmCommunicationPartId = FfaPartInfo.PartitionId;
+        FfaTestContext->FfaMmCommunicationPartId          = FfaPartInfo.PartitionId;
       }
     } else if (CompareGuid (GuidsOfInterest[Index], &gEfiTestServiceFfaGuid)) {
       if (EFI_ERROR (Status)) {
@@ -309,7 +309,7 @@ FfaMiscGetPartitionInfoRegs (
         continue;
       } else {
         FfaTestContext->IsTestServiceAvailable = TRUE;
-        FfaTestContext->FfaTestServicePartId = FfaPartInfo.PartitionId;
+        FfaTestContext->FfaTestServicePartId   = FfaPartInfo.PartitionId;
       }
     } else if (CompareGuid (GuidsOfInterest[Index], &gEfiTpm2ServiceFfaGuid)) {
       if (EFI_ERROR (Status)) {
@@ -319,7 +319,7 @@ FfaMiscGetPartitionInfoRegs (
         continue;
       } else {
         FfaTestContext->IsTpm2ServiceAvailable = TRUE;
-        FfaTestContext->FfaTpm2ServicePartId = FfaPartInfo.PartitionId;
+        FfaTestContext->FfaTpm2ServicePartId   = FfaPartInfo.PartitionId;
       }
     } else if (CompareGuid (GuidsOfInterest[Index], &gEfiNotificationServiceFfaGuid)) {
       if (EFI_ERROR (Status)) {
@@ -329,7 +329,7 @@ FfaMiscGetPartitionInfoRegs (
         continue;
       } else {
         FfaTestContext->IsNotificationServiceAvailable = TRUE;
-        FfaTestContext->FfaNotificationServicePartId = FfaPartInfo.PartitionId;
+        FfaTestContext->FfaNotificationServicePartId   = FfaPartInfo.PartitionId;
       }
     }
 
@@ -346,7 +346,7 @@ FfaMiscGetPartitionInfoRegs (
       DEBUG_INFO,
       "\tSP Guid = %g.\n",
       FfaPartInfo.PartitionUuid
-    ));
+      ));
     UT_ASSERT_MEM_EQUAL (
       &FfaPartInfo.PartitionUuid,
       &gZeroGuid,
@@ -369,10 +369,10 @@ FfaMiscGetPartitionInfo (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS                Status   = EFI_SUCCESS;
-  EFI_FFA_PART_INFO_DESC    FfaPartInfo;
-  UINT32                    Count;
-  UINT32                    Size;
+  EFI_STATUS              Status = EFI_SUCCESS;
+  EFI_FFA_PART_INFO_DESC  FfaPartInfo;
+  UINT32                  Count;
+  UINT32                  Size;
 
   // Discover the Ffa test SP after converting the EFI_GUID to a format TF-A will
   // understand.
@@ -417,7 +417,7 @@ FfaMiscSetupNotifications (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS        Status   = EFI_SUCCESS;
+  EFI_STATUS        Status = EFI_SUCCESS;
   UINTN             BindBitPos;
   FFA_TEST_CONTEXT  *FfaTestContext;
 
@@ -459,10 +459,10 @@ FfaMiscRegisterNotifications (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS        Status   = EFI_SUCCESS;
-  UINT64            Bitmap;
-  UINTN             SriIndex;
-  UINTN             Dummy;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINT64      Bitmap;
+  UINTN       SriIndex;
+  UINTN       Dummy;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -500,12 +500,12 @@ FfaMiscTestInterPartitionNormal (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS        Status   = EFI_SUCCESS;
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  EFI_STATUS           Status = EFI_SUCCESS;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -523,36 +523,36 @@ FfaMiscTestInterPartitionNormal (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_REGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 0;
-  Mapping.Bits.Id      = 0;
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 0;
+  Mapping.Bits.Id     = 0;
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
-  Mapping.Bits.Cookie  = 1;
-  Mapping.Bits.Id      = 1;
-  DirectMsgArgs.Arg8 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 1;
+  Mapping.Bits.Id     = 1;
+  DirectMsgArgs.Arg8  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg8));
-  Mapping.Bits.Cookie  = 2;
-  Mapping.Bits.Id      = 2;
-  DirectMsgArgs.Arg9 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 2;
+  Mapping.Bits.Id     = 2;
+  DirectMsgArgs.Arg9  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg9));
-  Mapping.Bits.Cookie   = 3;
-  Mapping.Bits.Id       = 3;
+  Mapping.Bits.Cookie = 3;
+  Mapping.Bits.Id     = 3;
   DirectMsgArgs.Arg10 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg10));
-  Mapping.Bits.Cookie   = 4;
-  Mapping.Bits.Id       = 4;
+  Mapping.Bits.Cookie = 4;
+  Mapping.Bits.Id     = 4;
   DirectMsgArgs.Arg11 = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg11));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -579,12 +579,12 @@ FfaMiscTestInterPartitionSecondary (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS        Status   = EFI_SUCCESS;
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  EFI_STATUS           Status = EFI_SUCCESS;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -602,26 +602,26 @@ FfaMiscTestInterPartitionSecondary (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_REGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 0;
-  Mapping.Bits.Id      = 5;
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 0;
+  Mapping.Bits.Id     = 5;
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
-  Mapping.Bits.Cookie  = 1;
-  Mapping.Bits.Id      = 6;
-  DirectMsgArgs.Arg8 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 1;
+  Mapping.Bits.Id     = 6;
+  DirectMsgArgs.Arg8  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg8));
-  Mapping.Bits.Cookie  = 2;
-  Mapping.Bits.Id      = 7;
-  DirectMsgArgs.Arg9 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 2;
+  Mapping.Bits.Id     = 7;
+  DirectMsgArgs.Arg9  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg9));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -648,12 +648,12 @@ FfaMiscTestInterPartitionDuplicateCookie (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -671,16 +671,16 @@ FfaMiscTestInterPartitionDuplicateCookie (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_REGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 2; // Duplicate Cookie
-  Mapping.Bits.Id      = 8; // Different ID
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 2;  // Duplicate Cookie
+  Mapping.Bits.Id     = 8;  // Different ID
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -707,12 +707,12 @@ FfaMiscTestInterPartitionInvalidDuplicateId (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -730,16 +730,16 @@ FfaMiscTestInterPartitionInvalidDuplicateId (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_REGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Registering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 3; // Different Cookie
-  Mapping.Bits.Id      = 7; // Duplicate ID
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 3;  // Different Cookie
+  Mapping.Bits.Id     = 7;  // Duplicate ID
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -766,11 +766,11 @@ FfaMiscTestInterPartitionInvalidMappingCountMin (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -786,11 +786,11 @@ FfaMiscTestInterPartitionInvalidMappingCountMin (
   DirectMsgArgs.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_REGISTER;
   DirectMsgArgs.Arg6 = 0x00; // Invalid
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaNotificationServicePartId,
+                         &gEfiNotificationServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -817,11 +817,11 @@ FfaMiscTestInterPartitionInvalidMappingCountMax (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -837,10 +837,11 @@ FfaMiscTestInterPartitionInvalidMappingCountMax (
   DirectMsgArgs.Arg4 = 0xb610b3a359f64054;
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_REGISTER;
   DirectMsgArgs.Arg6 = 0x8; // Invalid
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs);
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaNotificationServicePartId,
+                         &gEfiNotificationServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -867,12 +868,12 @@ FfaMiscTestInterPartitionUnregisterNormal (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -890,15 +891,16 @@ FfaMiscTestInterPartitionUnregisterNormal (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 1;
-  Mapping.Bits.Id      = 6;
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 1;
+  Mapping.Bits.Id     = 6;
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs);
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -925,12 +927,12 @@ FfaMiscTestInterPartitionUnregisterInvalidCookie (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -948,16 +950,16 @@ FfaMiscTestInterPartitionUnregisterInvalidCookie (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 1;
-  Mapping.Bits.Id      = 6;
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 1;
+  Mapping.Bits.Id     = 6;
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -984,12 +986,12 @@ FfaMiscTestInterPartitionUnregisterInvalidId (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  NotificationMapping     Mapping;
-  UINTN             NumMappings;
-  INT8              ResponseVal;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
+  DIRECT_MSG_ARGS      DirectMsgArgs;
+  NotificationMapping  Mapping;
+  UINTN                NumMappings;
+  INT8                 ResponseVal;
+  EFI_STATUS           Status;
+  FFA_TEST_CONTEXT     *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -1007,16 +1009,16 @@ FfaMiscTestInterPartitionUnregisterInvalidId (
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
   DirectMsgArgs.Arg6 = NumMappings;
   DEBUG ((DEBUG_INFO, "Unregistering %x Mappings:\n", NumMappings));
-  Mapping.Bits.Cookie  = 0;
-  Mapping.Bits.Id      = 0;
-  DirectMsgArgs.Arg7 = Mapping.Uint64;
+  Mapping.Bits.Cookie = 0;
+  Mapping.Bits.Id     = 0;
+  DirectMsgArgs.Arg7  = Mapping.Uint64;
   DEBUG ((DEBUG_INFO, "Cookie: %x, Id: %x\n", Mapping.Bits.Cookie, Mapping.Bits.Id));
   DEBUG ((DEBUG_INFO, "Register Value: %lx\n", DirectMsgArgs.Arg7));
   Status = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+             FfaTestContext->FfaNotificationServicePartId,
+             &gEfiNotificationServiceFfaGuid,
+             &DirectMsgArgs
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1059,11 +1061,11 @@ FfaMiscTestInterPartitionUnregisterInvalidUuid (
   /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
   /* Do not set UUID in x7-x8 (i.e. Arg3-Arg4) - Invalid */
   DirectMsgArgs.Arg5 = NOTIFICATION_OPCODE_UNREGISTER;
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaNotificationServicePartId,
-    &gEfiNotificationServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaNotificationServicePartId,
+                         &gEfiNotificationServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1105,11 +1107,11 @@ FfaMiscTestNotificationEvent (
   DirectMsgArgs.Arg2 = 0xb710b3a359f64054; // Battery Service
   /* IMPORTANT NOTE: Only bit 2 has been bound, test needs to match binding call */
   DirectMsgArgs.Arg3 = 0x02; // Cookie2 = ID2 = BitPos2
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaTestServicePartId,
-    &gEfiTestServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaTestServicePartId,
+                         &gEfiTestServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1146,11 +1148,11 @@ FfaMiscTestTpmGetVersion (
   // Call the TPM Service get_interface_version
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
   DirectMsgArgs.Arg0 = TPM2_FFA_GET_INTERFACE_VERSION;
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaTpm2ServicePartId,
-    &gEfiTpm2ServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaTpm2ServicePartId,
+                         &gEfiTpm2ServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1189,11 +1191,11 @@ FfaMiscTestTpmCloseLocality (
   DirectMsgArgs.Arg0 = TPM2_FFA_START;
   DirectMsgArgs.Arg1 = 0x101; // Close Locality
   DirectMsgArgs.Arg2 = 0x00;  // Locality Qualifier
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaTpm2ServicePartId,
-    &gEfiTpm2ServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaTpm2ServicePartId,
+                         &gEfiTpm2ServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1232,11 +1234,11 @@ FfaMiscTestTpmRequestLocality (
   DirectMsgArgs.Arg0 = TPM2_FFA_START;
   DirectMsgArgs.Arg1 = TPM2_FFA_START_FUNC_QUALIFIER_LOCALITY;
   DirectMsgArgs.Arg2 = 0x00; // Locality Qualifier
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaTpm2ServicePartId,
-    &gEfiTpm2ServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaTpm2ServicePartId,
+                         &gEfiTpm2ServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1275,11 +1277,11 @@ FfaMiscTestTpmReopenLocality (
   DirectMsgArgs.Arg0 = TPM2_FFA_START;
   DirectMsgArgs.Arg1 = 0x100; // Open Locality
   DirectMsgArgs.Arg2 = 0x00;  // Locality Qualifier
-  Status               = ArmFfaLibMsgSendDirectReq2 (
-    FfaTestContext->FfaTpm2ServicePartId,
-    &gEfiTpm2ServiceFfaGuid,
-    &DirectMsgArgs
-    );
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaTpm2ServicePartId,
+                         &gEfiTpm2ServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1312,10 +1314,10 @@ FfaPartitionTestAppEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS              Status;
-  UNIT_TEST_FRAMEWORK_HANDLE  Fw            = NULL;
-  UNIT_TEST_SUITE_HANDLE      Misc          = NULL;
-  FFA_TEST_CONTEXT           FfaTestContext = {0};
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw             = NULL;
+  UNIT_TEST_SUITE_HANDLE      Misc           = NULL;
+  FFA_TEST_CONTEXT            FfaTestContext = { 0 };
 
   DEBUG ((DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
@@ -1335,70 +1337,210 @@ FfaPartitionTestAppEntry (
     goto Done;
   }
 
-  AddTestCase (Misc, "Verify FF-A framework version", "Ffa.Miscellaneous.VerifyVersion",
-    FfaMiscVerifyVersion, NULL, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify FF-A framework version",
+    "Ffa.Miscellaneous.VerifyVersion",
+    FfaMiscVerifyVersion,
+    NULL,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Partition Info via registers", "Ffa.Miscellaneous.VerifyPartitionInfoRegs",
-    FfaMiscGetPartitionInfoRegs, NULL, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Partition Info via registers",
+    "Ffa.Miscellaneous.VerifyPartitionInfoRegs",
+    FfaMiscGetPartitionInfoRegs,
+    NULL,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Partition Info via Rx/Tx buffers", "Ffa.Miscellaneous.VerifyPartitionInfo",
-    FfaMiscGetPartitionInfo, NULL, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Partition Info via Rx/Tx buffers",
+    "Ffa.Miscellaneous.VerifyPartitionInfo",
+    FfaMiscGetPartitionInfo,
+    NULL,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify FF-A Ffa test SP notifications", "Ffa.Miscellaneous.SetupNotifications",
-    FfaMiscSetupNotifications, CheckTestService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify FF-A Ffa test SP notifications",
+    "Ffa.Miscellaneous.SetupNotifications",
+    FfaMiscSetupNotifications,
+    CheckTestService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify FF-A Ffa test SP notifications", "Ffa.Miscellaneous.RegisterNotifications",
-    FfaMiscRegisterNotifications, NULL, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify FF-A Ffa test SP notifications",
+    "Ffa.Miscellaneous.RegisterNotifications",
+    FfaMiscRegisterNotifications,
+    NULL,
+    NULL,
+    &FfaTestContext
+    );
 
   //
   // Test interpartition communication with the Ffa test SP.
   // These tests will only run if the Ffa test SP is available.
   //
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionNormal",
-    FfaMiscTestInterPartitionNormal, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionNormal",
+    FfaMiscTestInterPartitionNormal,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionSecondary",
-    FfaMiscTestInterPartitionSecondary, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionSecondary",
+    FfaMiscTestInterPartitionSecondary,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionDuplicateCookie",
-    FfaMiscTestInterPartitionDuplicateCookie, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionDuplicateCookie",
+    FfaMiscTestInterPartitionDuplicateCookie,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionInvalidDuplicateId",
-    FfaMiscTestInterPartitionInvalidDuplicateId, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionInvalidDuplicateId",
+    FfaMiscTestInterPartitionInvalidDuplicateId,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMin",
-    FfaMiscTestInterPartitionInvalidMappingCountMin, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMin",
+    FfaMiscTestInterPartitionInvalidMappingCountMin,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMax",
-    FfaMiscTestInterPartitionInvalidMappingCountMax, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMax",
+    FfaMiscTestInterPartitionInvalidMappingCountMax,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterNormal",
-    FfaMiscTestInterPartitionUnregisterNormal, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterNormal",
+    FfaMiscTestInterPartitionUnregisterNormal,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidCookie",
-    FfaMiscTestInterPartitionUnregisterInvalidCookie, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidCookie",
+    FfaMiscTestInterPartitionUnregisterInvalidCookie,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidId",
-    FfaMiscTestInterPartitionUnregisterInvalidId, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidId",
+    FfaMiscTestInterPartitionUnregisterInvalidId,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Inter Partition", "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidUuid",
-    FfaMiscTestInterPartitionUnregisterInvalidUuid, CheckNotificationService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Inter Partition",
+    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidUuid",
+    FfaMiscTestInterPartitionUnregisterInvalidUuid,
+    CheckNotificationService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa Notification Event", "Ffa.Miscellaneous.FfaTestNotificationEvent",
-    FfaMiscTestNotificationEvent, CheckTestService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa Notification Event",
+    "Ffa.Miscellaneous.FfaTestNotificationEvent",
+    FfaMiscTestNotificationEvent,
+    CheckTestService,
+    NULL,
+    &FfaTestContext
+    );
 
   // Test the TPM Service over Ffa interface.
-  AddTestCase (Misc, "Verify Ffa TPM Service", "Ffa.Miscellaneous.FfaTestTpmGetVersion",
-    FfaMiscTestTpmGetVersion, CheckTPMService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa TPM Service",
+    "Ffa.Miscellaneous.FfaTestTpmGetVersion",
+    FfaMiscTestTpmGetVersion,
+    CheckTPMService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa TPM Service", "Ffa.Miscellaneous.FfaTestTpmCloseLocality",
-    FfaMiscTestTpmCloseLocality, CheckTPMService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa TPM Service",
+    "Ffa.Miscellaneous.FfaTestTpmCloseLocality",
+    FfaMiscTestTpmCloseLocality,
+    CheckTPMService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa TPM Service", "Ffa.Miscellaneous.FfaTestTpmRequestLocality",
-    FfaMiscTestTpmRequestLocality, CheckTPMService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa TPM Service",
+    "Ffa.Miscellaneous.FfaTestTpmRequestLocality",
+    FfaMiscTestTpmRequestLocality,
+    CheckTPMService,
+    NULL,
+    &FfaTestContext
+    );
 
-  AddTestCase (Misc, "Verify Ffa TPM Service", "Ffa.Miscellaneous.FfaTestTpmReopenLocality",
-    FfaMiscTestTpmReopenLocality, CheckTPMService, NULL, &FfaTestContext);
+  AddTestCase (
+    Misc,
+    "Verify Ffa TPM Service",
+    "Ffa.Miscellaneous.FfaTestTpmReopenLocality",
+    FfaMiscTestTpmReopenLocality,
+    CheckTPMService,
+    NULL,
+    &FfaTestContext
+    );
 
   //
   // Execute the tests.
