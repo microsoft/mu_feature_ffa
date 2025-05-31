@@ -277,7 +277,7 @@ FfaMiscGetPartitionInfoRegs (
 
   //
   // Given the complexity of potentially having multiple partitions, we will
-  // just try to rerieve the partition information of the STMM SP, Test SP and TPM
+  // just try to retrieve the partition information of the STMM SP, Test SP and TPM
   // SP. The non-STMM SP availability will be checked in the next test case.
   //
   for (Index = 0; Index < ARRAY_SIZE (GuidsOfInterest); Index++) {
