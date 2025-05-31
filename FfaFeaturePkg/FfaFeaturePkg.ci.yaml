@@ -33,6 +33,7 @@
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
         ],
         "IgnoreInf": []
     },
