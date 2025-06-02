@@ -1390,6 +1390,8 @@ FfaPartitionTestAppEntry (
   //
   // Test interpartition communication with the Ffa test SP.
   // These tests will only run if the Ffa test SP is available.
+  // As a system level test, the order of the tests is important as the tests will
+  // will corporate the states of inter-partition service to test the Ffa test SP.
   //
   AddTestCase (
     Misc,
@@ -1501,7 +1503,10 @@ FfaPartitionTestAppEntry (
     &FfaTestContext
     );
 
-  // Test the TPM Service over Ffa interface.
+  //
+  // As a system level test, the order of the tests is important as the tests will
+  // will corporate the states of TPM service to test the Ffa test SP.
+  //
   AddTestCase (
     Misc,
     "Verify Ffa TPM Service",
