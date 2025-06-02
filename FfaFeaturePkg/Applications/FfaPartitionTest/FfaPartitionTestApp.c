@@ -1338,14 +1338,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify FF-A framework version",
-    "Ffa.Miscellaneous.VerifyVersion",
-    FfaMiscVerifyVersion,
-    NULL,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify FF-A framework version",
+             "Ffa.Miscellaneous.VerifyVersion",
+             FfaMiscVerifyVersion,
+             NULL,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for VerifyVersion\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1353,14 +1353,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Partition Info via registers",
-    "Ffa.Miscellaneous.VerifyPartitionInfoRegs",
-    FfaMiscGetPartitionInfoRegs,
-    NULL,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Partition Info via registers",
+             "Ffa.Miscellaneous.VerifyPartitionInfoRegs",
+             FfaMiscGetPartitionInfoRegs,
+             NULL,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for VerifyPartitionInfoRegs\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1368,14 +1368,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Partition Info via Rx/Tx buffers",
-    "Ffa.Miscellaneous.VerifyPartitionInfo",
-    FfaMiscGetPartitionInfo,
-    NULL,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Partition Info via Rx/Tx buffers",
+             "Ffa.Miscellaneous.VerifyPartitionInfo",
+             FfaMiscGetPartitionInfo,
+             NULL,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for VerifyPartitionInfo\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1383,14 +1383,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify FF-A Ffa test SP notifications",
-    "Ffa.Miscellaneous.SetupNotifications",
-    FfaMiscSetupNotifications,
-    CheckTestService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify FF-A Ffa test SP notifications",
+             "Ffa.Miscellaneous.SetupNotifications",
+             FfaMiscSetupNotifications,
+             CheckTestService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for SetupNotifications\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1398,14 +1398,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify FF-A Ffa test SP notifications",
-    "Ffa.Miscellaneous.RegisterNotifications",
-    FfaMiscRegisterNotifications,
-    NULL,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify FF-A Ffa test SP notifications",
+             "Ffa.Miscellaneous.RegisterNotifications",
+             FfaMiscRegisterNotifications,
+             NULL,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for RegisterNotifications\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1419,14 +1419,14 @@ FfaPartitionTestAppEntry (
   // will corporate the states of inter-partition service to test the Ffa test SP.
   //
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionNormal",
-    FfaMiscTestInterPartitionNormal,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionNormal",
+             FfaMiscTestInterPartitionNormal,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionNormal\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1434,14 +1434,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionSecondary",
-    FfaMiscTestInterPartitionSecondary,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionSecondary",
+             FfaMiscTestInterPartitionSecondary,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionSecondary\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1449,14 +1449,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionDuplicateCookie",
-    FfaMiscTestInterPartitionDuplicateCookie,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionDuplicateCookie",
+             FfaMiscTestInterPartitionDuplicateCookie,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionDuplicateCookie\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1464,14 +1464,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionInvalidDuplicateId",
-    FfaMiscTestInterPartitionInvalidDuplicateId,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionInvalidDuplicateId",
+             FfaMiscTestInterPartitionInvalidDuplicateId,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionInvalidDuplicateId\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1479,14 +1479,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMin",
-    FfaMiscTestInterPartitionInvalidMappingCountMin,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMin",
+             FfaMiscTestInterPartitionInvalidMappingCountMin,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionInvalidMappingCountMin\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1494,14 +1494,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMax",
-    FfaMiscTestInterPartitionInvalidMappingCountMax,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionInvalidMappingCountMax",
+             FfaMiscTestInterPartitionInvalidMappingCountMax,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionInvalidMappingCountMax\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1509,14 +1509,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterNormal",
-    FfaMiscTestInterPartitionUnregisterNormal,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterNormal",
+             FfaMiscTestInterPartitionUnregisterNormal,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionUnregisterNormal\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1524,14 +1524,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidCookie",
-    FfaMiscTestInterPartitionUnregisterInvalidCookie,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidCookie",
+             FfaMiscTestInterPartitionUnregisterInvalidCookie,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     EBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionUnregisterInvalidCookie\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1539,14 +1539,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidId",
-    FfaMiscTestInterPartitionUnregisterInvalidId,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidId",
+             FfaMiscTestInterPartitionUnregisterInvalidId,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionUnregisterInvalidId\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1554,14 +1554,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Inter Partition",
-    "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidUuid",
-    FfaMiscTestInterPartitionUnregisterInvalidUuid,
-    CheckNotificationService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Inter Partition",
+             "Ffa.Miscellaneous.FfaTestInterPartitionUnregisterInvalidUuid",
+             FfaMiscTestInterPartitionUnregisterInvalidUuid,
+             CheckNotificationService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionUnregisterInvalidUuid\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1569,14 +1569,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa Notification Event",
-    "Ffa.Miscellaneous.FfaTestNotificationEvent",
-    FfaMiscTestNotificationEvent,
-    CheckTestService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa Notification Event",
+             "Ffa.Miscellaneous.FfaTestNotificationEvent",
+             FfaMiscTestNotificationEvent,
+             CheckTestService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestNotificationEvent\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1588,14 +1588,14 @@ FfaPartitionTestAppEntry (
   // will corporate the states of TPM service to test the Ffa test SP.
   //
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa TPM Service",
-    "Ffa.Miscellaneous.FfaTestTpmGetVersion",
-    FfaMiscTestTpmGetVersion,
-    CheckTPMService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa TPM Service",
+             "Ffa.Miscellaneous.FfaTestTpmGetVersion",
+             FfaMiscTestTpmGetVersion,
+             CheckTPMService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmGetVersion\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1603,14 +1603,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa TPM Service",
-    "Ffa.Miscellaneous.FfaTestTpmCloseLocality",
-    FfaMiscTestTpmCloseLocality,
-    CheckTPMService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa TPM Service",
+             "Ffa.Miscellaneous.FfaTestTpmCloseLocality",
+             FfaMiscTestTpmCloseLocality,
+             CheckTPMService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmCloseLocality\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1618,14 +1618,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa TPM Service",
-    "Ffa.Miscellaneous.FfaTestTpmRequestLocality",
-    FfaMiscTestTpmRequestLocality,
-    CheckTPMService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa TPM Service",
+             "Ffa.Miscellaneous.FfaTestTpmRequestLocality",
+             FfaMiscTestTpmRequestLocality,
+             CheckTPMService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmRequestLocality\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
@@ -1633,14 +1633,14 @@ FfaPartitionTestAppEntry (
   }
 
   Status = AddTestCase (
-    Misc,
-    "Verify Ffa TPM Service",
-    "Ffa.Miscellaneous.FfaTestTpmReopenLocality",
-    FfaMiscTestTpmReopenLocality,
-    CheckTPMService,
-    NULL,
-    &FfaTestContext
-    );
+             Misc,
+             "Verify Ffa TPM Service",
+             "Ffa.Miscellaneous.FfaTestTpmReopenLocality",
+             FfaMiscTestTpmReopenLocality,
+             CheckTPMService,
+             NULL,
+             &FfaTestContext
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmReopenLocality\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
