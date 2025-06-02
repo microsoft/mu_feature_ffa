@@ -1533,7 +1533,7 @@ FfaPartitionTestAppEntry (
              &FfaTestContext
              );
   if (EFI_ERROR (Status)) {
-    EBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionUnregisterInvalidCookie\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestInterPartitionUnregisterInvalidCookie\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
