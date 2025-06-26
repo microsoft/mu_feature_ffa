@@ -426,13 +426,13 @@ FfaNotificationGet (
   }
 
   switch (Flags) {
-    case FFA_NOTIFICATIONS_FLAG_BITMAP_SP:
+    case ARM_FFA_NOTIFICATION_FLAG_BITMAP_SP:
       *NotificationBitmap = ((UINT64)Result.Arg3 << 32) | Result.Arg2;
       break;
-    case FFA_NOTIFICATIONS_FLAG_BITMAP_VM:
+    case ARM_FFA_NOTIFICATION_FLAG_BITMAP_VM:
       *NotificationBitmap = ((UINT64)Result.Arg5 << 32) | Result.Arg4;
       break;
-    case FFA_NOTIFICATIONS_FLAG_BITMAP_HYP:
+    case ARM_FFA_NOTIFICATION_FLAG_BITMAP_HYP:
       *NotificationBitmap = ((UINT64)Result.Arg7 << 32) | Result.Arg6;
       break;
     default:

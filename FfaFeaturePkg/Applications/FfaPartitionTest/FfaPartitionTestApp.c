@@ -85,7 +85,7 @@ ApIrqInterruptHandler (
   DEBUG ((DEBUG_INFO, "Received IRQ interrupt %d!\n", Source));
 
   // Then register this test app to receive notifications from the Ffa test SP
-  Status = FfaNotificationGet (0, FFA_NOTIFICATIONS_FLAG_BITMAP_SP, &Bitmap);
+  Status = FfaNotificationGet (0, ARM_FFA_NOTIFICATION_FLAG_BITMAP_SP, &Bitmap);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to notification get with FF-A Ffa test SP (%r).\n", Status));
   } else {
