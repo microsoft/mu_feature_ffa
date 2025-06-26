@@ -34,5 +34,5 @@
   Tpm2DebugLib
 
 [Pcd]
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc                   ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc       ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress          ## CONSUMES

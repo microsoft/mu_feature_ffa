@@ -36,7 +36,7 @@ The following are the steps needed to create a secure partition:
       gEfiSecurityPkgTokenSpaceGuid.PcdTpmInternalBaseAddress|0x10000200000
       gArmTokenSpaceGuid.PcdArmArchTimerFreqInHz|62500000
     <PcdsPatchableInModule>
-      gArmTokenSpaceGuid.PcdFfaLibConduitSmc|FALSE
+      gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc|FALSE
    }
    ```
 
