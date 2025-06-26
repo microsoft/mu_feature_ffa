@@ -100,7 +100,7 @@
 
   OemMiscLib|ArmPkg/Universal/Smbios/OemMiscLibNull/OemMiscLibNull.inf
 
-  ArmSvcLib|ArmPkg/Library/ArmSvcLib/ArmSvcLib.inf
+  ArmSvcLib|MdePkg/Library/ArmSvcLib/ArmSvcLib.inf
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
   DxeMemoryProtectionHobLib|MdeModulePkg/Library/MemoryProtectionHobLibNull/DxeMemoryProtectionHobLibNull.inf
