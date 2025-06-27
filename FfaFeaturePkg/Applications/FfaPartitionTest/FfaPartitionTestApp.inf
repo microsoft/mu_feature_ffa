@@ -54,8 +54,8 @@
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
 
 [Pcd]
-  gArmTokenSpaceGuid.PcdFfaRxBuffer
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaRxBuffer
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc
 
 [Guids]
   gEfiTpm2ServiceFfaGuid

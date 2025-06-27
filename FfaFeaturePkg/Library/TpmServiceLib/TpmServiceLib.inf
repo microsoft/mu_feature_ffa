@@ -21,6 +21,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   ArmPkg/ArmPkg.dec
   SecurityPkg/SecurityPkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
@@ -37,5 +38,5 @@
   TpmServiceStateTranslationLib
 
 [Pcd]
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc                   ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc       ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInternalBaseAddress  ## CONSUMES
