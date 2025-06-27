@@ -113,7 +113,7 @@ The following are steps needed to create a service for a secure partition:
    ```bash
    ## TPM Service over FF-A
    # Include/Guid/Tpm2ServiceFfa.h
-   gEfiTpm2ServiceFfaGuid = { 0x17b862a4, 0x1806, 0x4faf, { 0x86, 0xb3, 0x08, 0x9a, 0x58, 0x35, 0x38, 0x61 } }
+   gTpm2ServiceFfaGuid = { 0x17b862a4, 0x1806, 0x4faf, { 0x86, 0xb3, 0x08, 0x9a, 0x58, 0x35, 0x38, 0x61 } }
    ```
 
 6. Create a .h file that will contain all of the global functions related to your service. Place this file in the Path/To/Pkg/Include/Library
