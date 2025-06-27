@@ -22,6 +22,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  ArmPkg/ArmPkg.dec
   SecurityPkg/SecurityPkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
 
