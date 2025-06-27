@@ -30,6 +30,7 @@
   MdeModulePkg/MdeModulePkg.dec
   ArmPkg/ArmPkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
+  SecurityPkg/SecurityPkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
@@ -58,7 +59,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc
 
 [Guids]
-  gEfiTpm2ServiceFfaGuid
+  gTpm2ServiceFfaGuid
   gEfiNotificationServiceFfaGuid
   gEfiTestServiceFfaGuid
   gZeroGuid
