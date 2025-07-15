@@ -1,0 +1,18 @@
+### @file
+# Hello World DXE Rust driver.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+###
+
+[Defines]
+  INF_VERSION               = 1.27
+  BASE_NAME                 = MsSecurePartitionRust
+  FILE_GUID                 = 0CCB8755-5DFB-4787-B0E0-D8702BB00D29
+  MODULE_TYPE               = USER_DEFINED
+  RUST_MODULE               = TRUE
+  PI_SPECIFICATION_VERSION  = 0x00010032
+
+[Sources]
+  Cargo.toml
