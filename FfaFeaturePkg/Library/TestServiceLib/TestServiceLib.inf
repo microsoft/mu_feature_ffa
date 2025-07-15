@@ -21,7 +21,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  ArmPkg/ArmPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
 
 [LibraryClasses]
@@ -34,4 +34,4 @@
   NotificationServiceLib
 
 [Pcd]
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc
