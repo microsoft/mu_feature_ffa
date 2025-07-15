@@ -1103,6 +1103,8 @@ FfaMiscTestNotificationEvent (
   FfaTestContext = (FFA_TEST_CONTEXT *)Context;
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
+  mIsInterruptFired = FALSE; // Reset the interrupt fired flag
+
   // Test a Notification Event
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
   DirectMsgArgs.Arg0 = TEST_OPCODE_TEST_NOTIFICATION;
