@@ -31,7 +31,6 @@
   IoLib
   TimerLib
   DebugLib
-  Tpm2DebugLib
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc       ## CONSUMES
