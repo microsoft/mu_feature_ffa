@@ -460,7 +460,6 @@ FfaMiscRegisterNotifications (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
-  UINT64      Bitmap;
   UINTN       SriIndex;
   UINTN       Dummy;
 
@@ -484,8 +483,6 @@ FfaMiscRegisterNotifications (
       UT_ASSERT_NOT_EFI_ERROR (Status);
     }
   }
-
-  DEBUG ((DEBUG_INFO, "Registered notification with FF-A Ffa test SP with VM bitmap %x.\n", Bitmap));
 
   return UNIT_TEST_PASSED;
 }
