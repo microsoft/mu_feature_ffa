@@ -51,6 +51,7 @@ typedef struct {
 
 UINT16                           FfaPartId;
 EFI_HARDWARE_INTERRUPT_PROTOCOL  *gInterrupt;
+BOOLEAN                          mIsInterruptFired;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -85,12 +86,14 @@ ApIrqInterruptHandler (
   DEBUG ((DEBUG_INFO, "Received IRQ interrupt %d!\n", Source));
 
   // Then register this test app to receive notifications from the Ffa test SP
-  Status = FfaNotificationGet (0, FFA_NOTIFICATIONS_FLAG_BITMAP_SP, &Bitmap);
+  Status = FfaNotificationGet (0, ARM_FFA_NOTIFICATION_FLAG_BITMAP_SP, &Bitmap);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to notification get with FF-A Ffa test SP (%r).\n", Status));
   } else {
     DEBUG ((DEBUG_INFO, "Got notification from FF-A Ffa test SP with VM bitmap %x.\n", Bitmap));
   }
+
+  mIsInterruptFired = TRUE;
 
   gInterrupt->EndOfInterrupt (gInterrupt, Source);
 }
@@ -263,7 +266,7 @@ FfaMiscGetPartitionInfoRegs (
   EFI_GUID                *GuidsOfInterest[] = {
     &gEfiMmCommunication2ProtocolGuid,
     &gEfiTestServiceFfaGuid,
-    &gEfiTpm2ServiceFfaGuid,
+    &gTpm2ServiceFfaGuid,
     &gEfiNotificationServiceFfaGuid,
   };
 
@@ -311,7 +314,7 @@ FfaMiscGetPartitionInfoRegs (
         FfaTestContext->IsTestServiceAvailable = TRUE;
         FfaTestContext->FfaTestServicePartId   = FfaPartInfo.PartitionId;
       }
-    } else if (CompareGuid (GuidsOfInterest[Index], &gEfiTpm2ServiceFfaGuid)) {
+    } else if (CompareGuid (GuidsOfInterest[Index], &gTpm2ServiceFfaGuid)) {
       if (EFI_ERROR (Status)) {
         // If we are querying the TPM Service, we can skip it.
         DEBUG ((DEBUG_INFO, "%a TPM Service not found, skipping.\n", __func__));
@@ -444,7 +447,7 @@ FfaMiscSetupNotifications (
     UT_ASSERT_NOT_EFI_ERROR (Status);
   }
 
-  DEBUG ((DEBUG_INFO, "Binding Bit%x - Value: %x Successful.\n", BindBitPos, (1 << BindBitPos)));
+  DEBUG ((DEBUG_INFO, "Binding Bit%x - Value: %x Successful %x.\n", BindBitPos, (1 << BindBitPos), FfaTestContext->FfaTestServicePartId));
 
   return UNIT_TEST_PASSED;
 }
@@ -460,7 +463,6 @@ FfaMiscRegisterNotifications (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
-  UINT64      Bitmap;
   UINTN       SriIndex;
   UINTN       Dummy;
 
@@ -484,8 +486,6 @@ FfaMiscRegisterNotifications (
       UT_ASSERT_NOT_EFI_ERROR (Status);
     }
   }
-
-  DEBUG ((DEBUG_INFO, "Registered notification with FF-A Ffa test SP with VM bitmap %x.\n", Bitmap));
 
   return UNIT_TEST_PASSED;
 }
@@ -1100,6 +1100,8 @@ FfaMiscTestNotificationEvent (
   FfaTestContext = (FFA_TEST_CONTEXT *)Context;
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
+  mIsInterruptFired = FALSE; // Reset the interrupt fired flag
+
   // Test a Notification Event
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
   DirectMsgArgs.Arg0 = TEST_OPCODE_TEST_NOTIFICATION;
@@ -1123,6 +1125,12 @@ FfaMiscTestNotificationEvent (
   } else {
     DEBUG ((DEBUG_INFO, "Test Service Notification Event Success\n"));
   }
+
+  // Delay for a bit and wait for the notification to be processed
+  gBS->Stall (1000); // 1 millisecond
+
+  // Check if the notification was received
+  UT_ASSERT_TRUE (mIsInterruptFired);
 
   return UNIT_TEST_PASSED;
 }
@@ -1150,7 +1158,7 @@ FfaMiscTestTpmGetVersion (
   DirectMsgArgs.Arg0 = TPM2_FFA_GET_INTERFACE_VERSION;
   Status             = ArmFfaLibMsgSendDirectReq2 (
                          FfaTestContext->FfaTpm2ServicePartId,
-                         &gEfiTpm2ServiceFfaGuid,
+                         &gTpm2ServiceFfaGuid,
                          &DirectMsgArgs
                          );
   if (EFI_ERROR (Status)) {
@@ -1193,7 +1201,7 @@ FfaMiscTestTpmCloseLocality (
   DirectMsgArgs.Arg2 = 0x00;  // Locality Qualifier
   Status             = ArmFfaLibMsgSendDirectReq2 (
                          FfaTestContext->FfaTpm2ServicePartId,
-                         &gEfiTpm2ServiceFfaGuid,
+                         &gTpm2ServiceFfaGuid,
                          &DirectMsgArgs
                          );
   if (EFI_ERROR (Status)) {
@@ -1236,7 +1244,7 @@ FfaMiscTestTpmRequestLocality (
   DirectMsgArgs.Arg2 = 0x00; // Locality Qualifier
   Status             = ArmFfaLibMsgSendDirectReq2 (
                          FfaTestContext->FfaTpm2ServicePartId,
-                         &gEfiTpm2ServiceFfaGuid,
+                         &gTpm2ServiceFfaGuid,
                          &DirectMsgArgs
                          );
   if (EFI_ERROR (Status)) {
@@ -1279,7 +1287,7 @@ FfaMiscTestTpmReopenLocality (
   DirectMsgArgs.Arg2 = 0x00;  // Locality Qualifier
   Status             = ArmFfaLibMsgSendDirectReq2 (
                          FfaTestContext->FfaTpm2ServicePartId,
-                         &gEfiTpm2ServiceFfaGuid,
+                         &gTpm2ServiceFfaGuid,
                          &DirectMsgArgs
                          );
   if (EFI_ERROR (Status)) {

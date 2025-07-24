@@ -47,7 +47,7 @@ MsSecurePartitionHandleMessage (
 
   if (!CompareMem (&Request->ServiceGuid, &gEfiNotificationServiceFfaGuid, sizeof (EFI_GUID))) {
     NotificationServiceHandle (Request, Response);
-  } else if (!CompareMem (&Request->ServiceGuid, &gEfiTpm2ServiceFfaGuid, sizeof (EFI_GUID))) {
+  } else if (!CompareMem (&Request->ServiceGuid, &gTpm2ServiceFfaGuid, sizeof (EFI_GUID))) {
  #ifdef TPM2_ENABLE
     TpmServiceHandle (Request, Response);
  #else

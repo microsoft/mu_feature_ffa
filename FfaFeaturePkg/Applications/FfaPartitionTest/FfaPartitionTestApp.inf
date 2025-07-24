@@ -30,6 +30,7 @@
   MdeModulePkg/MdeModulePkg.dec
   ArmPkg/ArmPkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
+  SecurityPkg/SecurityPkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
@@ -54,11 +55,11 @@
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
 
 [Pcd]
-  gArmTokenSpaceGuid.PcdFfaRxBuffer
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaRxBuffer
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc
 
 [Guids]
-  gEfiTpm2ServiceFfaGuid
+  gTpm2ServiceFfaGuid
   gEfiNotificationServiceFfaGuid
   gEfiTestServiceFfaGuid
   gZeroGuid

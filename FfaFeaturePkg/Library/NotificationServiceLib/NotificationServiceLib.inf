@@ -21,7 +21,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  ArmPkg/ArmPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
 
 [LibraryClasses]
@@ -33,4 +33,4 @@
   ArmFfaLibEx
 
 [Pcd]
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc
