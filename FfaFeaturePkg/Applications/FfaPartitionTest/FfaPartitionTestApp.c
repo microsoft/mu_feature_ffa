@@ -51,6 +51,7 @@ typedef struct {
 
 UINT16                           FfaPartId;
 EFI_HARDWARE_INTERRUPT_PROTOCOL  *gInterrupt;
+BOOLEAN                          mIsInterruptFired;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -91,6 +92,8 @@ ApIrqInterruptHandler (
   } else {
     DEBUG ((DEBUG_INFO, "Got notification from FF-A Ffa test SP with VM bitmap %x.\n", Bitmap));
   }
+
+  mIsInterruptFired = TRUE;
 
   gInterrupt->EndOfInterrupt (gInterrupt, Source);
 }
@@ -444,7 +447,7 @@ FfaMiscSetupNotifications (
     UT_ASSERT_NOT_EFI_ERROR (Status);
   }
 
-  DEBUG ((DEBUG_INFO, "Binding Bit%x - Value: %x Successful.\n", BindBitPos, (1 << BindBitPos)));
+  DEBUG ((DEBUG_INFO, "Binding Bit%x - Value: %x Successful %x.\n", BindBitPos, (1 << BindBitPos), FfaTestContext->FfaTestServicePartId));
 
   return UNIT_TEST_PASSED;
 }
@@ -1097,6 +1100,8 @@ FfaMiscTestNotificationEvent (
   FfaTestContext = (FFA_TEST_CONTEXT *)Context;
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
+  mIsInterruptFired = FALSE; // Reset the interrupt fired flag
+
   // Test a Notification Event
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
   DirectMsgArgs.Arg0 = TEST_OPCODE_TEST_NOTIFICATION;
@@ -1120,6 +1125,12 @@ FfaMiscTestNotificationEvent (
   } else {
     DEBUG ((DEBUG_INFO, "Test Service Notification Event Success\n"));
   }
+
+  // Delay for a bit and wait for the notification to be processed
+  gBS->Stall (1000); // 1 millisecond
+
+  // Check if the notification was received
+  UT_ASSERT_TRUE (mIsInterruptFired);
 
   return UNIT_TEST_PASSED;
 }
