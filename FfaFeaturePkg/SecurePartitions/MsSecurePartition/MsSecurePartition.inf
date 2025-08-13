@@ -39,13 +39,9 @@
   FvLib
   MemoryAllocationLib
   IoLib
-  NotificationServiceLib
-  TestServiceLib
 
 [Guids]
   gTpm2ServiceFfaGuid
-  gEfiNotificationServiceFfaGuid
-  gEfiTestServiceFfaGuid
 
 #
 # This configuration fails for CLANGPDB, which does not support PIE in the GCC

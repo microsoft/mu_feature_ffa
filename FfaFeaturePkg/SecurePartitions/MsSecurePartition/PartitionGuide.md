@@ -138,8 +138,6 @@ The following are steps needed to create a service for a secure partition:
 
    ```bash
    [LibraryClasses]
-    NotificationServiceLib
-    TestServiceLib
     TpmServiceLib
    ```
 
