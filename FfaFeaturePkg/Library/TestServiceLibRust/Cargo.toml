@@ -1,0 +1,25 @@
+[package]
+name = "test-service-lib"
+categories = ["embedded", "no-std"]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Provides test services to OS"
+readme = "README.md"
+keywords = ["embedded", "no-std", "boot", "firmware"]
+
+[package.metadata.docs.rs]
+targets = ["aarch64-unknown-none", "aarch64-unknown-none-softfloat"]
+
+[dependencies]
+uuid.workspace = true
+odp-ffa.workspace = true
+num_enum.workspace = true
+log.workspace = true
+ec-service-lib.workspace = true
+
+[target.'cfg(target_os = "none")'.dependencies]
+aarch64-cpu.workspace = true
+
+[features]
+default = []
