@@ -23,8 +23,6 @@
 #include <Library/TestServiceLib.h>
 #include <Library/TpmServiceLib.h>
 #include <Guid/Tpm2ServiceFfa.h>
-#include <Guid/NotificationServiceFfa.h>
-#include <Guid/TestServiceFfa.h>
 
 /**
   Message Handler for the Microsoft Secure Partition
@@ -45,16 +43,12 @@ MsSecurePartitionHandleMessage (
   Response->SourceId      = Request->DestinationId;
   Response->DestinationId = Request->SourceId;
 
-  if (!CompareMem (&Request->ServiceGuid, &gEfiNotificationServiceFfaGuid, sizeof (EFI_GUID))) {
-    NotificationServiceHandle (Request, Response);
-  } else if (!CompareMem (&Request->ServiceGuid, &gTpm2ServiceFfaGuid, sizeof (EFI_GUID))) {
+  if (!CompareMem (&Request->ServiceGuid, &gTpm2ServiceFfaGuid, sizeof (EFI_GUID))) {
  #ifdef TPM2_ENABLE
     TpmServiceHandle (Request, Response);
  #else
     Response->Arg0 = EFI_UNSUPPORTED;
  #endif
-  } else if (!CompareMem (&Request->ServiceGuid, &gEfiTestServiceFfaGuid, sizeof (EFI_GUID))) {
-    TestServiceHandle (Request, Response);
   } else {
     DEBUG ((DEBUG_ERROR, "Invalid secure partition service UUID\n"));
     Response->Arg0 = EFI_NOT_FOUND;
@@ -80,11 +74,9 @@ MsSecurePartitionMain (
   DIRECT_MSG_ARGS_EX  Response;
 
   // Initialize the services running in this secure partition
-  NotificationServiceInit ();
  #ifdef TPM2_ENABLE
   TpmServiceInit ();
  #endif
-  TestServiceInit ();
 
   DEBUG ((DEBUG_INFO, "MS-Services secure partition initialized and running!\n"));
 

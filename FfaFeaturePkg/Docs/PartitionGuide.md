@@ -138,8 +138,6 @@ The following are steps needed to create a service for a secure partition:
 
    ```bash
    [LibraryClasses]
-    NotificationServiceLib
-    TestServiceLib
     TpmServiceLib
    ```
 
@@ -147,3 +145,13 @@ The following are steps needed to create a service for a secure partition:
    the Init, Deinit, and handler functions for your service. Note that you will need to extract the UUID from the
    DIRECT_REQ2 message and route it to the correct service. Including the UUID/GUID header from step 4 will allow you to
    use the variable you created in step 5.
+
+## Rust Based Secure Partition
+
+This repo provides a Rust based secure partition implementation [example](../../FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/Cargo.toml),
+which can be used to host FF-A services.
+
+The Rust based services are implemented based on `haf-ec-service` and its underlying embassy framework. For platforms
+targeting Rust, this provides a more ergonomic and safe way to implement secure partition services.
+
+Building instruction for the configured Rust secure partition can be found at [the document at its directory](../../FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/README.md)
