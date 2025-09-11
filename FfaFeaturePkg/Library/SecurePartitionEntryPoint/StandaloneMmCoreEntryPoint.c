@@ -36,6 +36,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FFA_PAGE_16K  1
 #define FFA_PAGE_64K  2
 
+//
+// This symbol is needed for this module to link against the Standalone MM Core instance of HobLib
+// (StandaloneMmPkg/Library/StandaloneMmCoreHobLib/StandaloneMmCoreHobLib.inf)
+//
+VOID  *gHobList = NULL;
+
 // Materialize the Secure Partition Services Table
 SECURE_PARTITION_SERVICES_TABLE  mSpst = {
   .FDTAddress = NULL
