@@ -2,7 +2,6 @@
 
 An implementation of Inter-Partition secure partition based on QEMU haf-ec-service.
 
-- `aarch64-paging` for page table management.
 - `aarch64-rt` for the entry point and exception handling.
 
 ## Building

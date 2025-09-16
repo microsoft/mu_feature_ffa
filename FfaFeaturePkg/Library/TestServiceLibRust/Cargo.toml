@@ -17,8 +17,5 @@ odp-ffa.workspace = true
 log.workspace = true
 ec-service-lib.workspace = true
 
-[target.'cfg(target_os = "none")'.dependencies]
-aarch64-cpu.workspace = true
-
 [features]
 default = []

@@ -9,31 +9,16 @@ members = [
 
 # Add packages that generate libraries here
 [workspace.dependencies]
-
-memoffset = "0.9.0"
-num-traits = { version = "0.2", default-features = false}
-num-derive = { version = "0.4", default-features = false}
-r-efi = "4.3.0"
-rustversion = "1.0.14"
-spin = "0.9.8"
-scroll = { version = "0.12", default-features = false, features = ["derive"]}
-
 aarch64-cpu = "10.0.0"
-aarch64-paging = { version = "0.8.1", default-features = false }
 aarch64-rt = { version = "0.1.0", default-features = false, features = [
     "el1",
     "exceptions",
 ] }
-bit-register = { git = "https://github.com/OpenDevicePartnership/odp-utilities", rev = "2f79d238" }
-critical-section = { version = "1.1.0", default-features = false }
-debug-non-default = { git = "https://github.com/OpenDevicePartnership/odp-utilities", rev = "2f79d238" }
-ec-service-lib = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
-embassy-aarch64-haf = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
 embassy-executor = { version = "0.9.1" }
-embassy-sync = { version = "0.7.2" }
-embedded-hal = { git = "https://github.com/rust-embedded/embedded-hal" }
+embassy-aarch64-haf = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
+ec-service-lib = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
 odp-ffa = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
 hafnium = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
-test-service-lib = { path = "FfaFeaturePkg/Library/TestServiceLibRust" }
 log = { version = "0.4", default-features = false }
 uuid = { version = "1.0", default-features = false, features = ["v1"] }
+test-service-lib = { path = "FfaFeaturePkg/Library/TestServiceLibRust" }
