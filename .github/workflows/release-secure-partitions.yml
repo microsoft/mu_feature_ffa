@@ -1,0 +1,109 @@
+# This workflow automatically publishes the rust secure partition binaries for a
+#  given release.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+name: Rust Secure Partition Build
+
+on:
+  release:
+    types:
+      - published
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release-secure-partitions.yml"
+      - "FfaFeaturePkg/**"
+
+jobs:
+  build:
+    name: Build Rust Secure Partition
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            tool_chain: GCC5
+            output_dir: "BaseTools/Source/C/bin"
+            target: AARCH64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Linux Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi g++-aarch64-linux-gnu g++-arm-linux-gnueabi
+          echo "GCC5_AARCH64_PREFIX=/usr/bin/aarch64-linux-gnu-" >> "$GITHUB_ENV"
+          echo "GCC5_ARM_PREFIX=/usr/bin/arm-linux-gnueabi-" >> "$GITHUB_ENV"
+
+      - name: Build Secure Partitions
+        run: |
+          cargo build --target=aarch64-unknown-none
+          cargo objcopy --target=aarch64-unknown-none -- -O binary msft-sp.bin
+
+      - name: Upload Build Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.tool_chain }}-${{ matrix.target }}
+          path: |
+            Build/SETUPLOG.txt
+            Build/UPDATE_LOG.txt
+            BaseTools/BaseToolsBuild/BASETOOLS_BUILD.txt
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: basetools-${{ matrix.tool_chain }}-${{ matrix.target }}
+          path: ${{ matrix.output_dir }}
+
+  publish:
+    name: Publish Base Tools
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/artifacts
+
+      - name: Stage Files
+        run: mkdir ${{ runner.temp }}/basetools ;
+          mv ${{ runner.temp }}/artifacts/basetools-GCC5-X64       ${{ runner.temp }}/basetools/Linux-x86 ;
+          chmod a+x ${{ runner.temp }}/basetools/Linux-x86/* ;
+          mv ${{ runner.temp }}/artifacts/basetools-GCC5-AARCH64   ${{ runner.temp }}/basetools/Linux-ARM-64 ;
+          chmod a+x ${{ runner.temp }}/basetools/Linux-ARM-64/* ;
+          mv ${{ runner.temp }}/artifacts/basetools-VS2022-IA32    ${{ runner.temp }}/basetools/Windows-x86 ;
+          mv ${{ runner.temp }}/artifacts/basetools-VS2022-AARCH64 ${{ runner.temp }}/basetools/Windows-ARM-64 ;
+
+      - name: Package Files
+        run: |
+          cd ${{ runner.temp }} ;
+          zip -r basetools-${{ github.event.release.tag_name }}.zip basetools/* ;
+          tar -czf basetools-${{ github.event.release.tag_name }}.tar.gz basetools/*
+
+      - name: Upload Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/basetools-*.zip
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/basetools-*.tar.gz

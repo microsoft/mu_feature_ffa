@@ -5,13 +5,9 @@ use odp_ffa::{Function, NotificationSet};
 use uuid::{uuid, Uuid};
 
 // Protocol CMD definitions for Test
+#[allow(dead_code)]
 const TEST_OPCODE_BASE: u64 = 0xDEF0;
 const TEST_OPCODE_TEST_NOTIFICATION: u64 = 0xDEF1;
-
-// Protocol status code definitions for Test
-const TEST_STATUS_SUCCESS: i64 = 0;
-const TEST_STATUS_GENERIC_ERROR: i64 = -1;
-const TEST_STATUS_INVALID_PARAMETER: i64 = -2;
 
 /* Test Service Defines */
 const DELAYED_SRI_BIT_POS: u64 = 1;
