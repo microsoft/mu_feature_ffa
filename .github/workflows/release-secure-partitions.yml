@@ -21,42 +21,32 @@ on:
 jobs:
   build:
     name: Build Rust Secure Partition
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            output_dir: "output"
-            target: "aarch64-unknown-none"
+    env:
+      OUTOUTPUT_DIR: output
+      BUILD_TARGET: aarch64-unknown-none
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Linux Tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi g++-aarch64-linux-gnu g++-arm-linux-gnueabi
-          echo "GCC5_AARCH64_PREFIX=/usr/bin/aarch64-linux-gnu-" >> "$GITHUB_ENV"
-          echo "GCC5_ARM_PREFIX=/usr/bin/arm-linux-gnueabi-" >> "$GITHUB_ENV"
-
       - name: Build Secure Partitions
         run: |
-          cargo build --target=${{ matrix.target }}
-          cargo objcopy --target=${{ matrix.target }} -- -O binary ${{ matrix.output_dir }}/msft-sp.bin
-          copy ${{ matrix.target }}/debug/msft-sp ${{ matrix.output_dir }}/msft-sp.elf
+          cargo build --target=$BUILD_TARGET
+          env:
+            cargo objcopy --target=$BUILD_TARGET -- -O binary $OUTOUTPUT_DIR: /msft-sp.bi
+          env:
+            copy $BUILD_TARGET/debug/msft-sp $OUTOUTPUT_DIR: /msft-sp.el
+          env:
+            copy Cargo.lock $OUTOUTPUT_DIR: /Cargo.loc
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rust-secure-partitions
-          path: ${{ matrix.output_dir }}
+          env:
+            path: $OUTOUTPUT_DIR
 
   publish:
     name: Publish Rust Partitions
