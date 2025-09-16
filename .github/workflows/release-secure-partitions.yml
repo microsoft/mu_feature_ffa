@@ -33,6 +33,7 @@ jobs:
 
       - name: Install Rust Components
         run: |
+          sudo apt-get install binutils
           rustup target add ${{ env.BUILD_TARGET }}
 
       - name: Build Secure Partitions
