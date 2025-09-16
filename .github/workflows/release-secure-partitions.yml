@@ -39,6 +39,7 @@ jobs:
 
       - name: Build Secure Partitions
         run: |
+          mkdir -p ${{ env.OUTOUTPUT_DIR }}
           cargo build --target=${{ env.BUILD_TARGET }}
           cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
           copy ${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
