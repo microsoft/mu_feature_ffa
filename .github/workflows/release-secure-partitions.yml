@@ -31,6 +31,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Install Rust Components
+        run: |
+          rustup target add ${{ env.BUILD_TARGET }}
+
       - name: Build Secure Partitions
         run: |
           cargo build --target=${{ env.BUILD_TARGET }}
