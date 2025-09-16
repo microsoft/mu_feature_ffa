@@ -42,7 +42,7 @@ jobs:
           mkdir -p ${{ env.OUTOUTPUT_DIR }}
           cargo build --target=${{ env.BUILD_TARGET }}
           cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
-          cp ${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
           cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
 
       - name: Upload Artifacts
