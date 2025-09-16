@@ -24,10 +24,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
-            tool_chain: GCC5
-            output_dir: "BaseTools/Source/C/bin"
-            target: AARCH64
+          - os: ubuntu-24.04
+            output_dir: "output"
+            target: "aarch64-unknown-none"
 
     runs-on: ${{ matrix.os }}
 
@@ -49,27 +48,18 @@ jobs:
 
       - name: Build Secure Partitions
         run: |
-          cargo build --target=aarch64-unknown-none
-          cargo objcopy --target=aarch64-unknown-none -- -O binary msft-sp.bin
-
-      - name: Upload Build Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: logs-${{ matrix.tool_chain }}-${{ matrix.target }}
-          path: |
-            Build/SETUPLOG.txt
-            Build/UPDATE_LOG.txt
-            BaseTools/BaseToolsBuild/BASETOOLS_BUILD.txt
+          cargo build --target=${{ matrix.target }}
+          cargo objcopy --target=${{ matrix.target }} -- -O binary ${{ matrix.output_dir }}/msft-sp.bin
+          copy ${{ matrix.target }}/debug/msft-sp ${{ matrix.output_dir }}/msft-sp.elf
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: basetools-${{ matrix.tool_chain }}-${{ matrix.target }}
+          name: rust-secure-partitions
           path: ${{ matrix.output_dir }}
 
   publish:
-    name: Publish Base Tools
+    name: Publish Rust Partitions
     needs: build
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
@@ -86,24 +76,15 @@ jobs:
         with:
           path: ${{ runner.temp }}/artifacts
 
-      - name: Stage Files
-        run: mkdir ${{ runner.temp }}/basetools ;
-          mv ${{ runner.temp }}/artifacts/basetools-GCC5-X64       ${{ runner.temp }}/basetools/Linux-x86 ;
-          chmod a+x ${{ runner.temp }}/basetools/Linux-x86/* ;
-          mv ${{ runner.temp }}/artifacts/basetools-GCC5-AARCH64   ${{ runner.temp }}/basetools/Linux-ARM-64 ;
-          chmod a+x ${{ runner.temp }}/basetools/Linux-ARM-64/* ;
-          mv ${{ runner.temp }}/artifacts/basetools-VS2022-IA32    ${{ runner.temp }}/basetools/Windows-x86 ;
-          mv ${{ runner.temp }}/artifacts/basetools-VS2022-AARCH64 ${{ runner.temp }}/basetools/Windows-ARM-64 ;
-
       - name: Package Files
         run: |
           cd ${{ runner.temp }} ;
-          zip -r basetools-${{ github.event.release.tag_name }}.zip basetools/* ;
-          tar -czf basetools-${{ github.event.release.tag_name }}.tar.gz basetools/*
+          zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
+          tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
 
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/basetools-*.zip
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/basetools-*.tar.gz
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.zip
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.tar.gz
