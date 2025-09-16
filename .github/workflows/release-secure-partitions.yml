@@ -46,7 +46,7 @@ jobs:
         with:
           name: rust-secure-partitions
           env:
-            path: $OUTOUTPUT_DIR
+            path: ${{ env.OUTOUTPUT_DIR }}
 
   publish:
     name: Publish Rust Partitions
