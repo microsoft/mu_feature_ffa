@@ -18,13 +18,13 @@ on:
       - ".github/workflows/release-secure-partitions.yml"
       - "FfaFeaturePkg/**"
 
+env:
+  OUTOUTPUT_DIR: output
+  BUILD_TARGET: aarch64-unknown-none
+
 jobs:
   build:
     name: Build Rust Secure Partition
-    env:
-      OUTOUTPUT_DIR: output
-      BUILD_TARGET: aarch64-unknown-none
-
     runs-on: ubuntu-latest
 
     steps:
