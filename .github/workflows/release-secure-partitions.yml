@@ -33,20 +33,16 @@ jobs:
 
       - name: Build Secure Partitions
         run: |
-          cargo build --target=$BUILD_TARGET
-          env:
-            cargo objcopy --target=$BUILD_TARGET -- -O binary $OUTOUTPUT_DIR: /msft-sp.bi
-          env:
-            copy $BUILD_TARGET/debug/msft-sp $OUTOUTPUT_DIR: /msft-sp.el
-          env:
-            copy Cargo.lock $OUTOUTPUT_DIR: /Cargo.loc
+          cargo build --target=${{ env.BUILD_TARGET }}
+          cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
+          copy ${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
+          copy Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rust-secure-partitions
-          env:
-            path: ${{ env.OUTOUTPUT_DIR }}
+          path: ${{ env.OUTOUTPUT_DIR }}
 
   publish:
     name: Publish Rust Partitions
