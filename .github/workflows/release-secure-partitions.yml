@@ -1,0 +1,83 @@
+# This workflow automatically publishes the rust secure partition binaries for a
+#  given release.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+name: Rust Secure Partition Build
+
+on:
+  release:
+    types:
+      - published
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release-secure-partitions.yml"
+      - "FfaFeaturePkg/**"
+
+env:
+  OUTOUTPUT_DIR: output
+  BUILD_TARGET: aarch64-unknown-none
+
+jobs:
+  build:
+    name: Build Rust Secure Partition
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust Components
+        run: |
+          cargo install cargo-binutils
+          rustup target add ${{ env.BUILD_TARGET }}
+          rustup component add llvm-tools
+
+      - name: Build Secure Partitions
+        run: |
+          mkdir -p ${{ env.OUTOUTPUT_DIR }}
+          cargo build --target=${{ env.BUILD_TARGET }}
+          cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
+          cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-secure-partitions
+          path: ${{ env.OUTOUTPUT_DIR }}
+
+  publish:
+    name: Publish Rust Partitions
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/artifacts
+
+      - name: Package Files
+        run: |
+          cd ${{ runner.temp }} ;
+          zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
+          tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
+
+      - name: Upload Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.zip
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.tar.gz
