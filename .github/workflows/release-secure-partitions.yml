@@ -67,13 +67,13 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ${{ runner.temp }}/artifacts
+          path: ${{ runner.temp }}
 
       - name: Package Files
         run: |
           cd ${{ runner.temp }} ;
-          zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip artifacts/rust-secure-partitions/* ;
-          tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz artifacts/rust-secure-partitions/*
+          zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
+          tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
 
       - name: Upload Release Asset
         env:
