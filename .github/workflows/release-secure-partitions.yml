@@ -79,5 +79,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.zip
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.tar.gz
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.zip
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.tar.gz
