@@ -54,7 +54,6 @@ jobs:
   publish:
     name: Publish Rust Partitions
     needs: build
-    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     permissions:
@@ -79,5 +78,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.zip
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.tar.gz
+          stat ${{ runner.temp }}/artifacts/rust-secure-partitions-*.zip
+          stat ${{ runner.temp }}/artifacts/rust-secure-partitions-*.tar.gz
+          # gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.zip
+          # gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.tar.gz
