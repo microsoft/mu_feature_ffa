@@ -51,7 +51,7 @@ jobs:
           tar -czf ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
 
       - name: Upload Release Asset
-        if: github.event_name == 'release'
+        # if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
