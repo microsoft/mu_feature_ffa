@@ -19,7 +19,7 @@ on:
       - "FfaFeaturePkg/**"
 
 env:
-  OUTOUTPUT_DIR: output
+  OUTOUTPUT_DIR: rust-secure-partitions
   BUILD_TARGET: aarch64-unknown-none
 
 jobs:
@@ -48,9 +48,8 @@ jobs:
       - name: Package Files
         # if: github.event_name == 'release'
         run: |
+          cp -r ${{ env.OUTOUTPUT_DIR }}/* ${{ runner.temp }}/rust-secure-partitions
           cd ${{ runner.temp }} ;
-          mkdir -p rust-secure-partitions ;
-          cp -r ${{ env.OUTOUTPUT_DIR }}/* rust-secure-partitions
           ls ;
           zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
           tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
