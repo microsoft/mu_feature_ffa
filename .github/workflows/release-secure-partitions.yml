@@ -48,11 +48,10 @@ jobs:
       - name: Package Files
         # if: github.event_name == 'release'
         run: |
-          cp -r ${{ env.OUTOUTPUT_DIR }}/* ${{ runner.temp }}/rust-secure-partitions
           cd ${{ runner.temp }} ;
           ls ;
-          zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
-          tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
+          zip -r ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
+          tar -czf ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
 
       - name: Upload Release Asset
         env:
