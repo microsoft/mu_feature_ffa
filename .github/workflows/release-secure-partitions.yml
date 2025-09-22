@@ -46,13 +46,12 @@ jobs:
           cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
 
       - name: Package Files
-        # if: github.event_name == 'release'
         run: |
-          ls ;
           zip -r ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
           tar -czf ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
 
       - name: Upload Release Asset
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
