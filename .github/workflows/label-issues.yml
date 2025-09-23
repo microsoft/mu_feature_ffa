@@ -14,7 +14,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
-name: Apply Issue and PR Labels
+name: Apply Issue and PR Labels 2
 
 on:
   issues:
