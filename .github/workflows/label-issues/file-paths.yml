@@ -14,7 +14,6 @@
 
 # Maintenance: Keep labels organized in ascending alphabetical order - easier to scan, identify duplicates, etc.
 
-Python:
-- any:
-  - changed-files:
-    - any-glob-to-any-file: ["**/*.py"]
+'language:python':
+- changed-files:
+  - any-glob-to-any-file: '**/*.py'

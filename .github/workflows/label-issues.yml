@@ -33,3 +33,6 @@ jobs:
   apply:
     uses: microsoft/mu_devops/.github/workflows/Labeler.yml@v18.0.0
     secrets: inherit
+    with:
+      configuration-path: .github/workflows/label-issues/file-paths.yml
+      github-token: ${{ secrets.GITHUB_TOKEN }}
