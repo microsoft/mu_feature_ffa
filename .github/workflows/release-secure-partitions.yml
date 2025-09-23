@@ -27,6 +27,9 @@ jobs:
     name: Build Rust Secure Partition
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
