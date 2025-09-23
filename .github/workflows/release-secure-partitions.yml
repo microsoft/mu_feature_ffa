@@ -19,7 +19,7 @@ on:
       - "FfaFeaturePkg/**"
 
 env:
-  OUTOUTPUT_DIR: output
+  OUTOUTPUT_DIR: rust-secure-partitions
   BUILD_TARGET: aarch64-unknown-none
 
 jobs:
@@ -45,39 +45,15 @@ jobs:
           cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
           cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: rust-secure-partitions
-          path: ${{ env.OUTOUTPUT_DIR }}
-
-  publish:
-    name: Publish Rust Partitions
-    needs: build
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v5
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v5
-        with:
-          path: ${{ runner.temp }}/artifacts
-
       - name: Package Files
         run: |
-          cd ${{ runner.temp }}/artifacts ;
-          zip -r rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
-          tar -czf rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
+          zip -r ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.zip rust-secure-partitions/* ;
+          tar -czf ${{ runner.temp }}/rust-secure-partitions-${{ github.event.release.tag_name }}.tar.gz rust-secure-partitions/*
 
       - name: Upload Release Asset
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.zip
-          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/artifacts/rust-secure-partitions-*.tar.gz
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.zip
+          gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.tar.gz
