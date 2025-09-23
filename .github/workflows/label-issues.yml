@@ -28,8 +28,41 @@ on:
       - reopened
       - synchronize
   workflow_dispatch:
+  workflow_call:
 
 jobs:
-  apply:
-    uses: microsoft/mu_devops/.github/workflows/Labeler.yml@v18.0.1
-    secrets: inherit
+  sync:
+    name: Label Based on Messages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate Token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.MU_ACCESS_APP_ID }}
+          private-key: ${{ secrets.MU_ACCESS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Apply Labels Based on PR File Paths
+        uses: actions/labeler@v6.0.1
+        with:
+          configuration-path: .github/workflows/label-issues/file-paths.yml
+          repo-token: ${{ steps.app-token.outputs.token }}
+          sync-labels: true
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+
+      - name: Apply PR Labels Based on Policies
+        uses: srvaroa/labeler@v1.13.0
+        with:
+          config_path: .github/workflows/label-issues/regex-pull-requests.yml
+          use_local_config: false
+          fail_on_error: true
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
