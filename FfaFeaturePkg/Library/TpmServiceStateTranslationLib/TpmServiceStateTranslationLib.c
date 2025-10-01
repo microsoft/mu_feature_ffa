@@ -19,6 +19,7 @@
 #include <Library/TimerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TpmServiceStateTranslationLib.h>
+#include <Library/ArmFfaLib.h>
 #include <IndustryStandard/Tpm20.h>
 
 /* TPM Service State Translation Library Defines */
@@ -30,6 +31,8 @@
 #define DELAY_AMOUNT  (30)
 
 #define PTP_TIMEOUT_MAX  (90000 * 1000) // 90s
+
+#define RETRY_COUNT_MAX  (2)
 
 /* TPM Service State Translation Library Variables */
 STATIC BOOLEAN  mIsCrbInterface;
@@ -124,12 +127,19 @@ FifoReadBurstCount (
   UINT16                  *BurstCount
   )
 {
-  UINT32  Timeout;
-  UINT8   DataByte0;
-  UINT8   DataByte1;
+  BOOLEAN  YieldCalled;
+  UINT32   RetryCount;
+  UINT8    DataByte0;
+  UINT8    DataByte1;
 
-  Timeout = 0;
-  do {
+  RetryCount = 0;
+  YieldCalled = FALSE;
+  while (!YieldCalled) {
+    if (RetryCount > RETRY_COUNT_MAX) {
+      ArmFfaLibYield(PTP_TIMEOUT_D);
+      YieldCalled = TRUE;
+    }
+
     DataByte0   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount);
     DataByte1   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount + 1);
     *BurstCount = (UINT16)((DataByte1 << 8) + DataByte0);
@@ -138,8 +148,9 @@ FifoReadBurstCount (
     }
 
     MicroSecondDelay (DELAY_AMOUNT);
-    Timeout += DELAY_AMOUNT;
-  } while (Timeout < PTP_TIMEOUT_D);
+
+    RetryCount++;
+  }
 
   return EFI_TIMEOUT;
 }
@@ -165,11 +176,19 @@ WaitRegisterBits (
   UINT32  Timeout
   )
 {
-  UINT32  RegRead;
-  UINT32  WaitTime;
+  BOOLEAN  YieldCalled;
+  UINT32   RegRead;
+  UINT32   RetryCount;
 
   /* Attempt to read the register based on the TPM type. */
-  for (WaitTime = 0; WaitTime < Timeout; WaitTime += DELAY_AMOUNT) {
+  RetryCount = 0;
+  YieldCalled = FALSE;
+  while (!YieldCalled) {
+    if (RetryCount > RETRY_COUNT_MAX) {
+      ArmFfaLibYield(Timeout);
+      YieldCalled = TRUE;
+    }
+
     if (mIsCrbInterface) {
       RegRead = MmioRead32 ((UINTN)Register);
     } else {
@@ -182,6 +201,8 @@ WaitRegisterBits (
     }
 
     MicroSecondDelay (DELAY_AMOUNT);
+
+    RetryCount++;
   }
 
   return EFI_TIMEOUT;
