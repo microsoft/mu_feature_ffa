@@ -407,6 +407,12 @@ FfaMiscGetPartitionInfo (
     FfaPartInfo.PartitionUuid
     ));
 
+  Status = ArmFfaLibRxRelease(0);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Error when releasing RX buffer (%r).\n", Status));
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+  }
+
   return UNIT_TEST_PASSED;
 }
 
@@ -1306,6 +1312,73 @@ FfaMiscTestTpmReopenLocality (
 }
 
 /**
+  This routine tests the FFA_NS_RES_INFO_GET command.
+**/
+UNIT_TEST_STATUS
+EFIAPI
+FfaMiscTestFfaNsResInfoGet (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS                     Status;
+  FFA_TEST_CONTEXT               *FfaTestContext;
+  UINT32                         WrittenSize;
+  UINT32                         RemainingSize;
+  VOID                           *TxBuffer;
+  VOID                           *RxBuffer;
+  UINT64                         TxSize;
+  UINT64                         RxSize;
+  FFA_RESOURCE_INFO_DESC_HEADER  *ResourceDescHeader;
+  FFA_ADDRESS_MAP_DESC           *AddressMapDescArray;
+  UINT32                         Index;
+
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
+
+  FfaTestContext = (FFA_TEST_CONTEXT *)Context;
+  UT_ASSERT_NOT_NULL (FfaTestContext);
+
+  // Invoke FFA_NS_RES_INFO_GET
+  Status = FfaNsResInfoGet (0, FFA_NS_RES_INFO_GET_REQ_START_FLAGS, &WrittenSize, &RemainingSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Error invoking FFA_NS_RES_INFO_GET (%r).\n", Status));
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+  }
+
+  // RX buffer should at minimum contain the resource desc header
+  UT_ASSERT_NOT_EQUAL(WrittenSize, 0);
+
+  // Acquire the RX/RX buffers
+  Status = ArmFfaLibGetRxTxBuffers (&TxBuffer, &TxSize, &RxBuffer, &RxSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to acquire RX/TX buffers (%r).\n", Status));
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+  }
+
+  ResourceDescHeader = (FFA_RESOURCE_INFO_DESC_HEADER*)RxBuffer;
+  AddressMapDescArray = (FFA_ADDRESS_MAP_DESC*)((UINT8*)RxBuffer + sizeof(FFA_RESOURCE_INFO_DESC_HEADER));
+
+  DEBUG ((DEBUG_INFO, "Remaining Size: 0x%x\n", RemainingSize));
+	DEBUG ((DEBUG_INFO, "Written Size: 0x%x\n", WrittenSize));
+	DEBUG ((DEBUG_INFO, "\n"));
+	DEBUG ((DEBUG_INFO, "Information:\n"));
+	DEBUG ((DEBUG_INFO, "  Size: 0x%x\n", ResourceDescHeader->AmdSize));
+	DEBUG ((DEBUG_INFO, "  Count: 0x%x\n", ResourceDescHeader->AmdCount));
+	DEBUG ((DEBUG_INFO, "  Offset: 0x%x\n", ResourceDescHeader->AmdOffset));
+  DEBUG ((DEBUG_INFO, "\n"));
+
+  for (Index = 0; Index < ResourceDescHeader->AmdCount; Index++) {
+    DEBUG ((DEBUG_INFO, "Address Map Descriptor: %d\n", Index));
+    DEBUG ((DEBUG_INFO, "  Base Address: %lx\n", AddressMapDescArray[Index].BaseAddress));
+    DEBUG ((DEBUG_INFO, "  Page Count: %x\n", AddressMapDescArray[Index].PageCount));
+    DEBUG ((DEBUG_INFO, "  Permissions: %x\n", AddressMapDescArray[Index].Permissions));
+    DEBUG ((DEBUG_INFO, "  Endpoint ID: %x\n", AddressMapDescArray[Index].EndpointId));
+    DEBUG ((DEBUG_INFO, "  Flags: %x\n", AddressMapDescArray[Index].Flags));
+  }
+
+  return UNIT_TEST_PASSED;
+}
+
+/**
   FfaPartitionTestAppEntry
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
@@ -1651,6 +1724,21 @@ FfaPartitionTestAppEntry (
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmReopenLocality\n", __FUNCTION__));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Done;
+  }
+
+  Status = AddTestCase (
+             Misc,
+             "Verify FFA_NS_RES_INFO_GET",
+             "Ffa.Miscellaneous.FfaNsResInfoGet",
+             FfaMiscTestFfaNsResInfoGet,
+             NULL,
+             NULL,
+             &FfaTestContext
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaNsResInfoGet\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }

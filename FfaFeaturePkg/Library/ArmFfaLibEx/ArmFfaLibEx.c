@@ -345,6 +345,38 @@ FfaMessageSendDirectResp2 (
 
 EFI_STATUS
 EFIAPI
+FfaNsResInfoGet (
+  IN UINT16   TargetId,
+  IN UINT64   Flags,
+  OUT UINT32  *WrittenSize,
+  OUT UINT32  *RemainingSize
+  )
+{
+  ARM_SXC_ARGS  Request = { 0 };
+  ARM_SXC_ARGS  Result  = { 0 };
+
+  if (WrittenSize == NULL || RemainingSize == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Request.Arg0 = ARM_FID_FFA_NS_RES_INFO_GET;
+  Request.Arg1 = TargetId;
+  Request.Arg2 = Flags;
+
+  ArmCallSxc(&Request, &Result);
+
+  if (Result.Arg0 == ARM_FID_FFA_ERROR) {
+    return FfaStatusToEfiStatus (Result.Arg2);
+  }
+
+  *WrittenSize   = Result.Arg2 >> 32;
+  *RemainingSize = Result.Arg2;
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
 FfaMemDonate (
   UINT32  TotalLength,
   UINT32  FragmentLength,
