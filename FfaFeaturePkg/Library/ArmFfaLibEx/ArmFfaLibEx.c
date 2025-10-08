@@ -355,7 +355,7 @@ FfaNsResInfoGet (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
-  if (WrittenSize == NULL || RemainingSize == NULL) {
+  if ((WrittenSize == NULL) || (RemainingSize == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -363,7 +363,7 @@ FfaNsResInfoGet (
   Request.Arg1 = TargetId;
   Request.Arg2 = Flags;
 
-  ArmCallSxc(&Request, &Result);
+  ArmCallSxc (&Request, &Result);
 
   if (Result.Arg0 == ARM_FID_FFA_ERROR) {
     return FfaStatusToEfiStatus (Result.Arg2);

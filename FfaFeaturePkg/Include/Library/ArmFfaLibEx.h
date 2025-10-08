@@ -75,15 +75,16 @@ typedef struct {
 } DIRECT_MSG_ARGS_EX;
 
 #pragma pack(1)
+
 /**
  * Resource Information Descriptor Header
  * Section 13.13: FFA_NS_RES_INFO_GET - Table 13.61
  */
 typedef struct {
-	UINT32  AmdSize;
-	UINT32  AmdCount;
-	UINT32  AmdOffset;
-	UINT32  Reserved;
+  UINT32    AmdSize;
+  UINT32    AmdCount;
+  UINT32    AmdOffset;
+  UINT32    Reserved;
 } FFA_RESOURCE_INFO_DESC_HEADER;
 
 /**
@@ -91,11 +92,11 @@ typedef struct {
  * Section 13.13: FFA_NS_RES_INFO_GET - Table 13.62
  */
 typedef struct {
-	UINT64  BaseAddress;
-	UINT32  PageCount;
-	UINT8   Permissions;
-	UINT16  EndpointId;
-	UINT8   Flags;
+  UINT64    BaseAddress;
+  UINT32    PageCount;
+  UINT8     Permissions;
+  UINT16    EndpointId;
+  UINT8     Flags;
 } FFA_ADDRESS_MAP_DESC;
 #pragma pack()
 

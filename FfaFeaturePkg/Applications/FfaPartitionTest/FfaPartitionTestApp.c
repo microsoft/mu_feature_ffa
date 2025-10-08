@@ -407,7 +407,7 @@ FfaMiscGetPartitionInfo (
     FfaPartInfo.PartitionUuid
     ));
 
-  Status = ArmFfaLibRxRelease(0);
+  Status = ArmFfaLibRxRelease (0);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Error when releasing RX buffer (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1340,7 +1340,7 @@ FfaMiscTestFfaNsResInfoGet (
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
   // Check if FFA_NS_RES_INFO_GET is supported
-  Status = ArmFfaLibGetFeatures(ARM_FID_FFA_NS_RES_INFO_GET, 0, &Property1, &Property2);
+  Status = ArmFfaLibGetFeatures (ARM_FID_FFA_NS_RES_INFO_GET, 0, &Property1, &Property2);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "FFA_NS_RES_INFO_GET is UNSUPPORTED (%r).\n", Status));
     return UNIT_TEST_PASSED;
@@ -1354,7 +1354,7 @@ FfaMiscTestFfaNsResInfoGet (
   }
 
   // RX buffer should at minimum contain the resource desc header
-  UT_ASSERT_NOT_EQUAL(WrittenSize, 0);
+  UT_ASSERT_NOT_EQUAL (WrittenSize, 0);
 
   // Acquire the RX/RX buffers
   Status = ArmFfaLibGetRxTxBuffers (&TxBuffer, &TxSize, &RxBuffer, &RxSize);
@@ -1363,16 +1363,16 @@ FfaMiscTestFfaNsResInfoGet (
     UT_ASSERT_NOT_EFI_ERROR (Status);
   }
 
-  ResourceDescHeader = (FFA_RESOURCE_INFO_DESC_HEADER*)RxBuffer;
-  AddressMapDescArray = (FFA_ADDRESS_MAP_DESC*)((UINT8*)RxBuffer + sizeof(FFA_RESOURCE_INFO_DESC_HEADER));
+  ResourceDescHeader  = (FFA_RESOURCE_INFO_DESC_HEADER *)RxBuffer;
+  AddressMapDescArray = (FFA_ADDRESS_MAP_DESC *)((UINT8 *)RxBuffer + sizeof (FFA_RESOURCE_INFO_DESC_HEADER));
 
   DEBUG ((DEBUG_INFO, "Remaining Size: 0x%x\n", RemainingSize));
-	DEBUG ((DEBUG_INFO, "Written Size: 0x%x\n", WrittenSize));
-	DEBUG ((DEBUG_INFO, "\n"));
-	DEBUG ((DEBUG_INFO, "Information:\n"));
-	DEBUG ((DEBUG_INFO, "  Size: 0x%x\n", ResourceDescHeader->AmdSize));
-	DEBUG ((DEBUG_INFO, "  Count: 0x%x\n", ResourceDescHeader->AmdCount));
-	DEBUG ((DEBUG_INFO, "  Offset: 0x%x\n", ResourceDescHeader->AmdOffset));
+  DEBUG ((DEBUG_INFO, "Written Size: 0x%x\n", WrittenSize));
+  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_INFO, "Information:\n"));
+  DEBUG ((DEBUG_INFO, "  Size: 0x%x\n", ResourceDescHeader->AmdSize));
+  DEBUG ((DEBUG_INFO, "  Count: 0x%x\n", ResourceDescHeader->AmdCount));
+  DEBUG ((DEBUG_INFO, "  Offset: 0x%x\n", ResourceDescHeader->AmdOffset));
   DEBUG ((DEBUG_INFO, "\n"));
 
   for (Index = 0; Index < ResourceDescHeader->AmdCount; Index++) {
