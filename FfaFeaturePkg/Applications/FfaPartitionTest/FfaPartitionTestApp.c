@@ -1331,14 +1331,23 @@ FfaMiscTestFfaNsResInfoGet (
   FFA_RESOURCE_INFO_DESC_HEADER  *ResourceDescHeader;
   FFA_ADDRESS_MAP_DESC           *AddressMapDescArray;
   UINT32                         Index;
+  UINTN                          Property1;
+  UINTN                          Property2;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
   FfaTestContext = (FFA_TEST_CONTEXT *)Context;
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
+  // Check if FFA_NS_RES_INFO_GET is supported
+  Status = ArmFfaLibGetFeatures(ARM_FID_FFA_NS_RES_INFO_GET, 0, &Property1, &Property2);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "FFA_NS_RES_INFO_GET is UNSUPPORTED (%r).\n", Status));
+    return UNIT_TEST_PASSED;
+  }
+
   // Invoke FFA_NS_RES_INFO_GET
-  Status = FfaNsResInfoGet (0, FFA_NS_RES_INFO_GET_REQ_START_FLAGS, &WrittenSize, &RemainingSize);
+  Status = FfaNsResInfoGet (0, 0, &WrittenSize, &RemainingSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Error invoking FFA_NS_RES_INFO_GET (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);

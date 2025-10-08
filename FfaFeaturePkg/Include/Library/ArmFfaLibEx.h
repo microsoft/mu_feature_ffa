@@ -99,17 +99,6 @@ typedef struct {
 } FFA_ADDRESS_MAP_DESC;
 #pragma pack()
 
-/* Flag used to determine the access type. */
-#define FFA_NS_RES_INFO_GET_DIRECTLY_ACC_FLAG 0x00
-#define FFA_NS_RES_INFO_GET_INDIRECTLY_ACC_FLAG 0x01
-
-/* Request flags for FFA_NS_RES_INFO_GET. */
-#define FFA_NS_RES_INFO_GET_REQ_START_FLAGS 0x00
-#define FFA_NS_RES_INFO_GET_REQ_CONT_FLAGS 0x10
-
-/* Flag used to determine a valid endpoint ID. */
-#define FFA_NS_RES_INFO_GET_VALID_EP_FLAG 0x01
-
 /**
  * CPU cycle management interfaces
  */
