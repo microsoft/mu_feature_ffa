@@ -74,6 +74,32 @@ typedef struct {
   UINTN       Arg13;
 } DIRECT_MSG_ARGS_EX;
 
+#pragma pack(1)
+
+/**
+ * Resource Information Descriptor Header
+ * Section 13.13: FFA_NS_RES_INFO_GET - Table 13.61
+ */
+typedef struct {
+  UINT32    AmdSize;
+  UINT32    AmdCount;
+  UINT32    AmdOffset;
+  UINT32    Reserved;
+} FFA_RESOURCE_INFO_DESC_HEADER;
+
+/**
+ * Address Map Descriptor
+ * Section 13.13: FFA_NS_RES_INFO_GET - Table 13.62
+ */
+typedef struct {
+  UINT64    BaseAddress;
+  UINT32    PageCount;
+  UINT8     Permissions;
+  UINT16    EndpointId;
+  UINT8     Flags;
+} FFA_ADDRESS_MAP_DESC;
+#pragma pack()
+
 /**
  * CPU cycle management interfaces
  */
@@ -163,6 +189,15 @@ EFIAPI
 FfaMessageSendDirectResp2 (
   IN DIRECT_MSG_ARGS_EX   *Request,
   OUT DIRECT_MSG_ARGS_EX  *Response
+  );
+
+EFI_STATUS
+EFIAPI
+FfaNsResInfoGet (
+  IN UINT16   TargetId,
+  IN UINT64   Flags,
+  OUT UINT32  *WrittenSize,
+  OUT UINT32  *RemainingSize
   );
 
 EFI_STATUS
