@@ -1,8 +1,9 @@
 use ec_service_lib::{Result, Service};
-use log::{debug, error};
+use log::{debug, error, info};
 use odp_ffa::{MsgSendDirectReq2, MsgSendDirectResp2, Payload, RegisterPayload};
 use odp_ffa::{Function, NotificationSet};
 use uuid::{uuid, Uuid};
+use aarch64_cpu::registers::{CNTFRQ_EL0, CNTVCT_EL0, Readable, Writeable};
 
 // Protocol CMD definitions for Test
 #[allow(dead_code)]
@@ -39,6 +40,20 @@ impl Test {
         let bit_pos = 1 << cookie;
 
         debug!("notification_handler for {:?}", sender_uuid);
+
+        // Prepare for the delay
+        info!("init() - reading CNTFRQ_EL0");
+        let frequency = CNTFRQ_EL0.get();
+
+        info!(
+            "init() - frequency: {}",
+            frequency
+        );
+
+        // Hot looping here for 20 seconds
+        let wait_ticks = 20 * frequency;
+        let start = CNTVCT_EL0.get();
+        while CNTVCT_EL0.get() - start < wait_ticks {}
 
         // Set up notification through the Notify service
         // TODO;
