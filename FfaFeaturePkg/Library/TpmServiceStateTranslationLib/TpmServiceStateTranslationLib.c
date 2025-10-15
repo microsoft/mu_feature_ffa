@@ -29,10 +29,9 @@
 #define LOCALITY_OFFSET  (0x1000)
 
 #define DELAY_AMOUNT  (30)
+#define YIELD_AMOUNT  (10 * 1000) // 10ms
 
 #define PTP_TIMEOUT_MAX  (90000 * 1000) // 90s
-
-#define RETRY_COUNT_MAX  (2)
 
 /* TPM Service State Translation Library Variables */
 STATIC BOOLEAN  mIsCrbInterface;
@@ -127,18 +126,14 @@ FifoReadBurstCount (
   UINT16                  *BurstCount
   )
 {
-  BOOLEAN  YieldCalled;
-  UINT32   RetryCount;
-  UINT8    DataByte0;
-  UINT8    DataByte1;
+  EFI_STATUS  Status;
+  UINT32      DelayAmount;
+  UINT8       DataByte0;
+  UINT8       DataByte1;
 
-  RetryCount = 0;
-  YieldCalled = FALSE;
-  while (!YieldCalled) {
-    if (RetryCount > RETRY_COUNT_MAX) {
-      ArmFfaLibYield(PTP_TIMEOUT_D);
-      YieldCalled = TRUE;
-    }
+  DelayAmount = 0;
+  do {
+    MicroSecondDelay (DELAY_AMOUNT);
 
     DataByte0   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount);
     DataByte1   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount + 1);
@@ -147,10 +142,14 @@ FifoReadBurstCount (
       return EFI_SUCCESS;
     }
 
-    MicroSecondDelay (DELAY_AMOUNT);
+    Status = ArmFfaLibYield (YIELD_AMOUNT);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[%s] - Error when attempting to YIELD\n", __func__));
+      return Status;
+    }
 
-    RetryCount++;
-  }
+    DelayAmount += YIELD_AMOUNT + DELAY_AMOUNT;
+  } while (DelayAmount < PTP_TIMEOUT_D);
 
   return EFI_TIMEOUT;
 }
@@ -176,19 +175,15 @@ WaitRegisterBits (
   UINT32  Timeout
   )
 {
-  BOOLEAN  YieldCalled;
-  UINT32   RegRead;
-  UINT32   RetryCount;
+  EFI_STATUS  Status;
+  UINT32      DelayAmount;
+  UINT32      RegRead;
 
-  /* Attempt to read the register based on the TPM type. */
-  RetryCount = 0;
-  YieldCalled = FALSE;
-  while (!YieldCalled) {
-    if (RetryCount > RETRY_COUNT_MAX) {
-      ArmFfaLibYield(Timeout);
-      YieldCalled = TRUE;
-    }
+  DelayAmount = 0;
+  do {
+    MicroSecondDelay (DELAY_AMOUNT);
 
+    /* Attempt to read the register based on the TPM type. */
     if (mIsCrbInterface) {
       RegRead = MmioRead32 ((UINTN)Register);
     } else {
@@ -200,10 +195,14 @@ WaitRegisterBits (
       return EFI_SUCCESS;
     }
 
-    MicroSecondDelay (DELAY_AMOUNT);
+    Status = ArmFfaLibYield (YIELD_AMOUNT);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[%s] - Error when attempting to YIELD\n", __func__));
+      return Status;
+    }
 
-    RetryCount++;
-  }
+    DelayAmount += YIELD_AMOUNT + DELAY_AMOUNT;
+  } while (DelayAmount < Timeout);
 
   return EFI_TIMEOUT;
 }
