@@ -131,15 +131,20 @@ FifoReadBurstCount (
   UINT8       DataByte0;
   UINT8       DataByte1;
 
-  DelayAmount = 0;
-  do {
-    MicroSecondDelay (DELAY_AMOUNT);
+  /* Slight delay before we start checking the registers */
+  MicroSecondDelay (DELAY_AMOUNT);
 
+  DelayAmount = 0;
+  while (TRUE) {
     DataByte0   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount);
     DataByte1   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount + 1);
     *BurstCount = (UINT16)((DataByte1 << 8) + DataByte0);
     if (*BurstCount != 0) {
       return EFI_SUCCESS;
+    }
+
+    if (DelayAmount >= PTP_TIMEOUT_D) {
+      break;
     }
 
     Status = ArmFfaLibYield (YIELD_AMOUNT);
@@ -148,8 +153,8 @@ FifoReadBurstCount (
       return Status;
     }
 
-    DelayAmount += YIELD_AMOUNT + DELAY_AMOUNT;
-  } while (DelayAmount < PTP_TIMEOUT_D);
+    DelayAmount += YIELD_AMOUNT;
+  }
 
   return EFI_TIMEOUT;
 }
@@ -179,10 +184,11 @@ WaitRegisterBits (
   UINT32      DelayAmount;
   UINT32      RegRead;
 
-  DelayAmount = 0;
-  do {
-    MicroSecondDelay (DELAY_AMOUNT);
+  /* Slight delay before we start checking the registers */
+  MicroSecondDelay (DELAY_AMOUNT);
 
+  DelayAmount = 0;
+  while (TRUE) {
     /* Attempt to read the register based on the TPM type. */
     if (mIsCrbInterface) {
       RegRead = MmioRead32 ((UINTN)Register);
@@ -195,14 +201,18 @@ WaitRegisterBits (
       return EFI_SUCCESS;
     }
 
+    if (DelayAmount >= Timeout) {
+      break;
+    }
+
     Status = ArmFfaLibYield (YIELD_AMOUNT);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "[%s] - Error when attempting to YIELD\n", __func__));
       return Status;
     }
 
-    DelayAmount += YIELD_AMOUNT + DELAY_AMOUNT;
-  } while (DelayAmount < Timeout);
+    DelayAmount += YIELD_AMOUNT;
+  }
 
   return EFI_TIMEOUT;
 }
