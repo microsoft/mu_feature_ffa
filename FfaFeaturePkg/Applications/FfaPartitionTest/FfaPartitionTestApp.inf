@@ -46,6 +46,7 @@
   ArmFfaLibEx
   UefiBootServicesTableLib
   UnitTestLib
+  TimerLib
 
 [Protocols]
   gHardwareInterruptProtocolGuid

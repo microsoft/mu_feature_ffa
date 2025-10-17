@@ -9,6 +9,7 @@ use aarch64_cpu::registers::{CNTFRQ_EL0, CNTVCT_EL0, Readable, Writeable};
 #[allow(dead_code)]
 const TEST_OPCODE_BASE: u64 = 0xDEF0;
 const TEST_OPCODE_TEST_NOTIFICATION: u64 = 0xDEF1;
+const TEST_OPCODE_TEST_DELAY: u64 = 0xDEF2;
 
 /* Test Service Defines */
 const DELAYED_SRI_BIT_POS: u64 = 1;
@@ -41,6 +42,26 @@ impl Test {
 
         debug!("notification_handler for {:?}", sender_uuid);
 
+        // Set up notification through the Notify service
+        // TODO;
+        // let notify_msg = MsgSendDirectReq2::new(
+        //     Function::Notify,
+        //     0)
+        NotificationSet::new(msg.source_id(), msg.destination_id(), flag, bit_pos)
+            .exec()
+            .unwrap();
+
+        GenericRsp {
+            status: 0x0,
+        }
+    }
+
+    fn delay_handler(&self, msg: &MsgSendDirectReq2) -> GenericRsp {
+        // Grab the delay time from x6, which is register_at(1)
+        let delay_time = msg.register_at(1);
+
+        debug!("delay_handler for {} microseconds", delay_time);
+
         // Prepare for the delay
         info!("init() - reading CNTFRQ_EL0");
         let frequency = CNTFRQ_EL0.get();
@@ -50,19 +71,10 @@ impl Test {
             frequency
         );
 
-        // Hot looping here for 20 seconds
-        let wait_ticks = 20 * frequency;
+        // Hot looping here for the delay
+        let wait_ticks = (frequency * delay_time) / 1_000_000;
         let start = CNTVCT_EL0.get();
         while CNTVCT_EL0.get() - start < wait_ticks {}
-
-        // Set up notification through the Notify service
-        // TODO;
-        // let notify_msg = MsgSendDirectReq2::new(
-        //     Function::Notify,
-        //     0)
-        NotificationSet::new(msg.source_id(), msg.destination_id(), flag, bit_pos)
-            .exec()
-            .unwrap();
 
         GenericRsp {
             status: 0x0,
@@ -87,6 +99,7 @@ impl Service for Test {
 
         let payload = match cmd {
             TEST_OPCODE_TEST_NOTIFICATION => RegisterPayload::from(self.notification_handler(&msg)),
+            TEST_OPCODE_TEST_DELAY => RegisterPayload::from(self.delay_handler(&msg)),
             _ => {
                 error!("Unknown Test Command: {}", cmd);
                 return Err(odp_ffa::Error::Other("Unknown Test Command"));

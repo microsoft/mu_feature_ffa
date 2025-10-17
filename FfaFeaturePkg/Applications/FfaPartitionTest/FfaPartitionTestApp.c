@@ -30,6 +30,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
+#include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UnitTestLib.h>
@@ -1136,6 +1137,65 @@ FfaMiscTestNotificationEvent (
 }
 
 /**
+  This routine tests the notification event with the Ffa test SP.
+**/
+UNIT_TEST_STATUS
+EFIAPI
+FfaMiscTestDelayEvent (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  DIRECT_MSG_ARGS   DirectMsgArgs;
+  EFI_STATUS        Status;
+  FFA_TEST_CONTEXT  *FfaTestContext;
+  UINT64            StartTime;
+  UINT64            EndTime;
+  UINT64            ElapsedTime;
+  UINT64            TimeToTest = 5000000; // 5 seconds in microseconds
+
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
+
+  FfaTestContext = (FFA_TEST_CONTEXT *)Context;
+  UT_ASSERT_NOT_NULL (FfaTestContext);
+
+  mIsInterruptFired = FALSE; // Reset the interrupt fired flag
+
+  StartTime = GetPerformanceCounter ();
+
+  // Test a Notification Event
+  ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
+  DirectMsgArgs.Arg0 = TEST_OPCODE_TEST_DELAY;
+  DirectMsgArgs.Arg1 = TimeToTest;
+  Status             = ArmFfaLibMsgSendDirectReq2 (
+                         FfaTestContext->FfaTestServicePartId,
+                         &gEfiTestServiceFfaGuid,
+                         &DirectMsgArgs
+                         );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+  }
+
+  if (DirectMsgArgs.Arg0 != TEST_STATUS_SUCCESS) {
+    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgs.Arg0));
+    UT_ASSERT_EQUAL (DirectMsgArgs.Arg0, TEST_STATUS_SUCCESS);
+  } else {
+    DEBUG ((DEBUG_INFO, "Test Service Notification Event Success\n"));
+  }
+
+  EndTime = GetPerformanceCounter ();
+  ElapsedTime = GetTimeInNanoSecond (EndTime - StartTime);
+  ElapsedTime = ElapsedTime / 1000; // Convert to microseconds
+  DEBUG ((DEBUG_INFO, "Delay Event Elapsed Time: %lu us\n", ElapsedTime));
+  if (ElapsedTime < TimeToTest) {
+    DEBUG ((DEBUG_ERROR, "Delay Event Completed Too Quickly\n"));
+    UT_ASSERT_TRUE (FALSE);
+  }
+
+  return UNIT_TEST_PASSED;
+}
+
+/**
   This routine tests the TPM version retrieval with the Ffa test SP.
 **/
 UNIT_TEST_STATUS
@@ -1587,6 +1647,21 @@ FfaPartitionTestAppEntry (
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestNotificationEvent\n", __FUNCTION__));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Done;
+  }
+
+  Status = AddTestCase (
+             Misc,
+             "Verify Ffa Notification Event",
+             "Ffa.Miscellaneous.FfaMiscTestDelayEvent",
+             FfaMiscTestDelayEvent,
+             CheckTestService,
+             NULL,
+             &FfaTestContext
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaMiscTestDelayEvent\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
