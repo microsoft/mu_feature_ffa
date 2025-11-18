@@ -19,6 +19,7 @@
 #include <Library/TimerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TpmServiceStateTranslationLib.h>
+#include <Library/ArmFfaLib.h>
 #include <IndustryStandard/Tpm20.h>
 
 /* TPM Service State Translation Library Defines */
@@ -28,6 +29,7 @@
 #define LOCALITY_OFFSET  (0x1000)
 
 #define DELAY_AMOUNT  (30)
+#define YIELD_AMOUNT  (10 * 1000) // 10ms
 
 #define PTP_TIMEOUT_MAX  (90000 * 1000) // 90s
 
@@ -124,12 +126,16 @@ FifoReadBurstCount (
   UINT16                  *BurstCount
   )
 {
-  UINT32  Timeout;
-  UINT8   DataByte0;
-  UINT8   DataByte1;
+  EFI_STATUS  Status;
+  UINT32      DelayAmount;
+  UINT8       DataByte0;
+  UINT8       DataByte1;
 
-  Timeout = 0;
-  do {
+  /* Slight delay before we start checking the registers */
+  MicroSecondDelay (DELAY_AMOUNT);
+
+  DelayAmount = 0;
+  while (TRUE) {
     DataByte0   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount);
     DataByte1   = MmioRead8 ((UINTN)&ExternalFifo->BurstCount + 1);
     *BurstCount = (UINT16)((DataByte1 << 8) + DataByte0);
@@ -137,9 +143,18 @@ FifoReadBurstCount (
       return EFI_SUCCESS;
     }
 
-    MicroSecondDelay (DELAY_AMOUNT);
-    Timeout += DELAY_AMOUNT;
-  } while (Timeout < PTP_TIMEOUT_D);
+    if (DelayAmount >= PTP_TIMEOUT_D) {
+      break;
+    }
+
+    Status = ArmFfaLibYield (YIELD_AMOUNT);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[%s] - Error when attempting to YIELD\n", __func__));
+      return Status;
+    }
+
+    DelayAmount += YIELD_AMOUNT;
+  }
 
   return EFI_TIMEOUT;
 }
@@ -165,11 +180,16 @@ WaitRegisterBits (
   UINT32  Timeout
   )
 {
-  UINT32  RegRead;
-  UINT32  WaitTime;
+  EFI_STATUS  Status;
+  UINT32      DelayAmount;
+  UINT32      RegRead;
 
-  /* Attempt to read the register based on the TPM type. */
-  for (WaitTime = 0; WaitTime < Timeout; WaitTime += DELAY_AMOUNT) {
+  /* Slight delay before we start checking the registers */
+  MicroSecondDelay (DELAY_AMOUNT);
+
+  DelayAmount = 0;
+  while (TRUE) {
+    /* Attempt to read the register based on the TPM type. */
     if (mIsCrbInterface) {
       RegRead = MmioRead32 ((UINTN)Register);
     } else {
@@ -181,7 +201,17 @@ WaitRegisterBits (
       return EFI_SUCCESS;
     }
 
-    MicroSecondDelay (DELAY_AMOUNT);
+    if (DelayAmount >= Timeout) {
+      break;
+    }
+
+    Status = ArmFfaLibYield (YIELD_AMOUNT);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[%s] - Error when attempting to YIELD\n", __func__));
+      return Status;
+    }
+
+    DelayAmount += YIELD_AMOUNT;
   }
 
   return EFI_TIMEOUT;
