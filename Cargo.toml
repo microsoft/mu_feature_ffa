@@ -10,7 +10,7 @@ members = [
 # Add packages that generate libraries here
 [workspace.dependencies]
 aarch64-cpu = "11.0.0"
-aarch64-rt = { version = "0.2.2", default-features = false, features = [
+aarch64-rt = { version = "0.3.1", default-features = false, features = [
     "el1",
     "exceptions",
 ] }
