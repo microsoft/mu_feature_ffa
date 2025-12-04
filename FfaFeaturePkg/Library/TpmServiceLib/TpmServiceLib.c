@@ -55,7 +55,7 @@ typedef UINTN TpmStatus;
 STATIC TpmState                      mCurrentState;
 STATIC UINT8                         mActiveLocality;
 STATIC PTP_CRB_INTERFACE_IDENTIFIER  mInterfaceIdDefault;
-STATIC TpmLocalityState              mLocalityStates[NUM_LOCALITIES] = {0};
+STATIC TpmLocalityState              mLocalityStates[NUM_LOCALITIES] = { 0 };
 
 /**
   Converts the passed in EFI_STATUS to a TPM_STATUS
@@ -369,7 +369,7 @@ HandleLocalityRequest (
     /* Check if we are doing a locality request */
   } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
     /* Make sure there is no active locality if requesting a different locality */
-    if (mActiveLocality != NUM_LOCALITIES && mActiveLocality != Locality) {
+    if ((mActiveLocality != NUM_LOCALITIES) && (mActiveLocality != Locality)) {
       DEBUG ((DEBUG_ERROR, "Locality Request Failed - Locality Not Relinquished\n"));
       return TPM2_FFA_ERROR_DENIED;
     }
