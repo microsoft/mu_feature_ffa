@@ -32,10 +32,6 @@
 #define TPM_MAJOR_VER  (0x1)
 #define TPM_MINOR_VER  (0x0)
 
-/* TODO: Temporary Solution - May move to Tpm2ServiceFfa.h */
-#define TPM_START_PROCESS_OPEN_LOC   (0x100)
-#define TPM_START_PROCESS_CLOSE_LOC  (0x101)
-
 #define TPM_LOCALITY_OFFSET  (0x1000)
 
 /* TPM Service States */
@@ -59,7 +55,7 @@ typedef UINTN TpmStatus;
 STATIC TpmState                      mCurrentState;
 STATIC UINT8                         mActiveLocality;
 STATIC PTP_CRB_INTERFACE_IDENTIFIER  mInterfaceIdDefault;
-STATIC TpmLocalityState              mLocalityStates[NUM_LOCALITIES];
+STATIC TpmLocalityState              mLocalityStates[NUM_LOCALITIES] = {0};
 
 /**
   Converts the passed in EFI_STATUS to a TPM_STATUS
@@ -372,6 +368,12 @@ HandleLocalityRequest (
     ActiveLocality = NUM_LOCALITIES; // Invalid
     /* Check if we are doing a locality request */
   } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
+    /* Make sure there is no active locality if requesting a different locality */
+    if (mActiveLocality != NUM_LOCALITIES && mActiveLocality != Locality) {
+      DEBUG ((DEBUG_ERROR, "Locality Request Failed - Locality Not Relinquished\n"));
+      return TPM2_FFA_ERROR_DENIED;
+    }
+
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Request\n", Locality));
     Status         = TpmSstLocalityRequest (Locality);
     ActiveLocality = Locality;
@@ -469,25 +471,8 @@ StartHandler (
 
   /* Check to make sure we received a valid locality */
   if (Locality >= NUM_LOCALITIES) {
-    Response->Arg0 = TPM2_FFA_ERROR_INVARG;
     DEBUG ((DEBUG_ERROR, "Invalid Locality\n"));
     ReturnVal = TPM2_FFA_ERROR_INVARG;
-    goto exit;
-  }
-
-  /* TODO: Temporary solution*/
-
-  /* NOTE: The following commands should only be coming
-   *       from TF-A. */
-  /* Check if there was a request to open a locality */
-  if (Function == TPM_START_PROCESS_OPEN_LOC) {
-    /* Set the locality state to OPEN */
-    mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
-    goto exit;
-    /* Check if there was a request to close a locality */
-  } else if (Function == TPM_START_PROCESS_CLOSE_LOC) {
-    /* Set the locality state to CLOSED */
-    mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
     goto exit;
   }
 
@@ -599,6 +584,67 @@ FinishHandler (
 }
 
 /**
+  Handler for TPM service Manage Locality command
+
+  @param  Request   The incoming message
+  @param  Response  The outgoing message
+
+  @retval TPM_STATUS_OK      Success
+  @retval TPM_STATUS_INVARG  Invalid parameter
+  @retval TPM_STATUS_DENIED  Access denied
+
+**/
+STATIC
+TpmStatus
+ManageLocalityHandler (
+  DIRECT_MSG_ARGS_EX  *Request,
+  DIRECT_MSG_ARGS_EX  *Response
+  )
+{
+  TpmStatus  ReturnVal;
+  UINT16     LocalityOperation;
+  UINT8      Locality;
+
+  ReturnVal         = TPM2_FFA_SUCCESS_OK;
+  LocalityOperation = Request->Arg1;
+  Locality          = Request->Arg2;
+
+  /* NOTE: The following command should only be coming
+   *       from a logical sp owned by TF-A. */
+  if (!(Request->SourceId & 0xFF00)) {
+    DEBUG ((DEBUG_ERROR, "Invalid Source ID\n"));
+    ReturnVal = TPM2_FFA_ERROR_DENIED;
+    goto exit;
+  }
+
+  /* Check to make sure we received a valid locality */
+  if (Locality >= NUM_LOCALITIES) {
+    DEBUG ((DEBUG_ERROR, "Invalid Locality\n"));
+    ReturnVal = TPM2_FFA_ERROR_INVARG;
+    goto exit;
+  }
+
+  /* Check if there was a request to open a locality */
+  if (LocalityOperation == TPM2_FFA_MANAGE_LOCALITY_OPEN) {
+    DEBUG ((DEBUG_INFO, "Locality: %d Opened\n", Locality));
+    /* Set the locality state to OPEN */
+    mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
+    /* Check if there was a request to close a locality */
+  } else if (LocalityOperation == TPM2_FFA_MANAGE_LOCALITY_CLOSE) {
+    DEBUG ((DEBUG_INFO, "Locality: %d Closed\n", Locality));
+    /* Set the locality state to CLOSED */
+    mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
+  } else {
+    DEBUG ((DEBUG_ERROR, "Invalid Locality Operation\n"));
+    ReturnVal = TPM2_FFA_ERROR_INVARG;
+  }
+
+exit:
+  Response->Arg0 = ReturnVal;
+  return ReturnVal;
+}
+
+/**
   Initializes the TPM service
 
 **/
@@ -619,16 +665,6 @@ TpmServiceInit (
   /* Initializes all of the localities. */
   for (Locality = 0; Locality < NUM_LOCALITIES; Locality++) {
     InitInternalCrb (Locality);
-  }
-
-  /* Default the locality states */
-  for (Locality = 0; Locality < NUM_LOCALITIES; Locality++) {
-    /* Locality 0 and 1 are open by default */
-    if ((Locality == 0) || (Locality == 1)) {
-      mLocalityStates[Locality] = TPM_LOCALITY_OPEN;
-    } else {
-      mLocalityStates[Locality] = TPM_LOCALITY_CLOSED;
-    }
   }
 
   /* Initialize the TPM Service State Translation Library. */
@@ -696,6 +732,10 @@ TpmServiceHandle (
 
     case TPM2_FFA_FINISH_NOTIFIED:
       FinishHandler (Request, Response);
+      break;
+
+    case TPM2_FFA_MANAGE_LOCALITY:
+      ManageLocalityHandler (Request, Response);
       break;
 
     default:

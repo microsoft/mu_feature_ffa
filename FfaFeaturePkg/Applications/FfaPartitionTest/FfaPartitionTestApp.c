@@ -1183,7 +1183,7 @@ FfaMiscTestTpmGetVersion (
 }
 
 /**
-  This routine tests the TPM Service to close locality with the Ffa test SP.
+  This routine tests the TPM Service to manage locality with the Ffa test SP.
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -1200,53 +1200,10 @@ FfaMiscTestTpmCloseLocality (
   FfaTestContext = (FFA_TEST_CONTEXT *)Context;
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
-  // Call the TPM Service to close locality0
+  // Call the TPM Service to attempt to close locality0
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
-  DirectMsgArgs.Arg0 = TPM2_FFA_START;
-  DirectMsgArgs.Arg1 = 0x101; // Close Locality
-  DirectMsgArgs.Arg2 = 0x00;  // Locality Qualifier
-  Status             = ArmFfaLibMsgSendDirectReq2 (
-                         FfaTestContext->FfaTpm2ServicePartId,
-                         &gTpm2ServiceFfaGuid,
-                         &DirectMsgArgs
-                         );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
-    UT_ASSERT_NOT_EFI_ERROR (Status);
-  }
-
-  if (DirectMsgArgs.Arg0 != TPM2_FFA_SUCCESS_OK) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgs.Arg0));
-    UT_ASSERT_EQUAL (DirectMsgArgs.Arg0, TPM2_FFA_SUCCESS_OK);
-  } else {
-    DEBUG ((DEBUG_INFO, "TPM Service Close Locality Success\n"));
-  }
-
-  return UNIT_TEST_PASSED;
-}
-
-/**
-  This routine tests the TPM Service to request locality with the Ffa test SP.
-**/
-UNIT_TEST_STATUS
-EFIAPI
-FfaMiscTestTpmRequestLocality (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
-
-  DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
-
-  FfaTestContext = (FFA_TEST_CONTEXT *)Context;
-  UT_ASSERT_NOT_NULL (FfaTestContext);
-
-  // Call the TPM Service to request locality0
-  ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
-  DirectMsgArgs.Arg0 = TPM2_FFA_START;
-  DirectMsgArgs.Arg1 = TPM2_FFA_START_FUNC_QUALIFIER_LOCALITY;
+  DirectMsgArgs.Arg0 = TPM2_FFA_MANAGE_LOCALITY;
+  DirectMsgArgs.Arg1 = TPM2_FFA_MANAGE_LOCALITY_CLOSE;
   DirectMsgArgs.Arg2 = 0x00; // Locality Qualifier
   Status             = ArmFfaLibMsgSendDirectReq2 (
                          FfaTestContext->FfaTpm2ServicePartId,
@@ -1258,54 +1215,12 @@ FfaMiscTestTpmRequestLocality (
     UT_ASSERT_NOT_EFI_ERROR (Status);
   }
 
+  // Manage locality can only be called by TF-A
   if (DirectMsgArgs.Arg0 != TPM2_FFA_ERROR_DENIED) {
     DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgs.Arg0));
     UT_ASSERT_EQUAL (DirectMsgArgs.Arg0, TPM2_FFA_ERROR_DENIED);
   } else {
-    DEBUG ((DEBUG_INFO, "TPM Service Rejected Request, Locality Closed\n"));
-  }
-
-  return UNIT_TEST_PASSED;
-}
-
-/**
-  This routine tests the TPM Service to reopen locality with the Ffa test SP.
-**/
-UNIT_TEST_STATUS
-EFIAPI
-FfaMiscTestTpmReopenLocality (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  DIRECT_MSG_ARGS   DirectMsgArgs;
-  EFI_STATUS        Status;
-  FFA_TEST_CONTEXT  *FfaTestContext;
-
-  DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
-
-  FfaTestContext = (FFA_TEST_CONTEXT *)Context;
-  UT_ASSERT_NOT_NULL (FfaTestContext);
-
-  // Call the TPM Service to reopen locality0
-  ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
-  DirectMsgArgs.Arg0 = TPM2_FFA_START;
-  DirectMsgArgs.Arg1 = 0x100; // Open Locality
-  DirectMsgArgs.Arg2 = 0x00;  // Locality Qualifier
-  Status             = ArmFfaLibMsgSendDirectReq2 (
-                         FfaTestContext->FfaTpm2ServicePartId,
-                         &gTpm2ServiceFfaGuid,
-                         &DirectMsgArgs
-                         );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Unable to communicate direct req 2 with FF-A Ffa test SP (%r).\n", Status));
-    UT_ASSERT_NOT_EFI_ERROR (Status);
-  }
-
-  if (DirectMsgArgs.Arg0 != TPM2_FFA_SUCCESS_OK) {
-    DEBUG ((DEBUG_ERROR, "Command Failed: %x\n", DirectMsgArgs.Arg0));
-    UT_ASSERT_EQUAL (DirectMsgArgs.Arg0, TPM2_FFA_SUCCESS_OK);
-  } else {
-    DEBUG ((DEBUG_INFO, "TPM Service Open Locality Success\n"));
+    DEBUG ((DEBUG_INFO, "TPM Service Close Locality Success\n"));
   }
 
   return UNIT_TEST_PASSED;
@@ -1703,36 +1618,6 @@ FfaPartitionTestAppEntry (
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmCloseLocality\n", __FUNCTION__));
-    Status = EFI_OUT_OF_RESOURCES;
-    goto Done;
-  }
-
-  Status = AddTestCase (
-             Misc,
-             "Verify Ffa TPM Service",
-             "Ffa.Miscellaneous.FfaTestTpmRequestLocality",
-             FfaMiscTestTpmRequestLocality,
-             CheckTPMService,
-             NULL,
-             &FfaTestContext
-             );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmRequestLocality\n", __FUNCTION__));
-    Status = EFI_OUT_OF_RESOURCES;
-    goto Done;
-  }
-
-  Status = AddTestCase (
-             Misc,
-             "Verify Ffa TPM Service",
-             "Ffa.Miscellaneous.FfaTestTpmReopenLocality",
-             FfaMiscTestTpmReopenLocality,
-             CheckTPMService,
-             NULL,
-             &FfaTestContext
-             );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Failed in AddTestCase for FfaTestTpmReopenLocality\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
