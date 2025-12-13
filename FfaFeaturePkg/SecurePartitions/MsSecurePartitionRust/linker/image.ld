@@ -23,6 +23,15 @@ ENTRY(entry)
 SECTIONS
 {
 	/*
+	 * Vector table must be at the start for proper exception handling
+	 */
+	.vectors : ALIGN(2048) {
+		vectors_begin = .;
+		*(.vectors)
+		vectors_end = .;
+	} >image
+
+	/*
 	 * Collect together the code.
 	 */
 	.init : ALIGN(4096) {
