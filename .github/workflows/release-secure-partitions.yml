@@ -17,6 +17,7 @@ on:
     paths:
       - ".github/workflows/release-secure-partitions.yml"
       - "FfaFeaturePkg/**"
+      - "**/*.toml"
 
 env:
   OUTOUTPUT_DIR: rust-secure-partitions
@@ -60,3 +61,4 @@ jobs:
         run: |
           gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.zip
           gh release upload ${{ github.event.release.tag_name }} ${{ runner.temp }}/rust-secure-partitions-*.tar.gz
+
