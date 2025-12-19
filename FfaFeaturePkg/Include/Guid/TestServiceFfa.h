@@ -18,6 +18,7 @@
 
 #define TEST_OPCODE_BASE               (0xDEF0)
 #define TEST_OPCODE_TEST_NOTIFICATION  (TEST_OPCODE_BASE + 0x01)
+#define TEST_OPCODE_TEST_DELAY         (TEST_OPCODE_BASE + 0x02)
 
 extern EFI_GUID  gEfiTestServiceFfaGuid;
 
