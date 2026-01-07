@@ -16,7 +16,7 @@ Direct Request messages the normal world can issue the ABIs specified in the CRB
 specification to communicate with the TPM.
 
 Communication occurs through a CRB interface which is spec defined via Trusted Computing
-Group (TCG) PC Client Specific Platform TPM Profile for TPM2.0. See
+Group (TCG) PC Client Specific Platform TPM Profile for TPM 2.0. See
 [TCG PC Client Platform TPM Profile Specification for TPM 2.0](https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Specific-Platform-TPM-Profile-for-TPM-2p0-Version-1p06_pub.pdf)
 for more details.
 

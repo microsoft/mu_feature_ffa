@@ -611,7 +611,7 @@ ManageLocalityHandler (
 
   /* NOTE: The following command should only be coming
    *       from a logical sp owned by TF-A. */
-  if (!(Request->SourceId & 0xFF00)) {
+  if ((Request->SourceId & 0xFF00) != 0xFF00) {
     DEBUG ((DEBUG_ERROR, "Invalid Source ID\n"));
     ReturnVal = TPM2_FFA_ERROR_DENIED;
     goto exit;
