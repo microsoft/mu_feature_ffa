@@ -34,6 +34,8 @@
 
 #define TPM_LOCALITY_OFFSET  (0x1000)
 
+#define NO_ACTIVE_LOCALITY  (NUM_LOCALITIES) // Invalid Locality Value
+
 /* TPM Service States */
 typedef enum {
   TPM_STATE_IDLE = 0,
@@ -140,7 +142,7 @@ CleanInternalCrb (
   /* If the user has never requested a locality, don't clean, no need.
    * We should only ever clean the active locality as when localities change
    * we clear the entire CRB region. */
-  if (mActiveLocality == NUM_LOCALITIES) {
+  if (mActiveLocality == NO_ACTIVE_LOCALITY) {
     return;
   }
 
@@ -365,11 +367,11 @@ HandleLocalityRequest (
 
     DEBUG ((DEBUG_INFO, "Handle TPM Locality%x Relinquish\n", Locality));
     Status         = TpmSstLocalityRelinquish (Locality);
-    ActiveLocality = NUM_LOCALITIES; // Invalid
+    ActiveLocality = NO_ACTIVE_LOCALITY;
     /* Check if we are doing a locality request */
   } else if (InternalTpmCrb->LocalityControl & PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS) {
     /* Make sure there is no active locality if requesting a different locality */
-    if ((mActiveLocality != NUM_LOCALITIES) && (mActiveLocality != Locality)) {
+    if ((mActiveLocality != NO_ACTIVE_LOCALITY) && (mActiveLocality != Locality)) {
       DEBUG ((DEBUG_ERROR, "Locality Request Failed - Locality Not Relinquished\n"));
       return TPM2_FFA_ERROR_DENIED;
     }
@@ -672,7 +674,7 @@ TpmServiceInit (
 
   /* Initialize our default state information. */
   mCurrentState   = TPM_STATE_IDLE;
-  mActiveLocality = NUM_LOCALITIES; // Invalid - No active locality
+  mActiveLocality = NO_ACTIVE_LOCALITY;
 }
 
 /**
