@@ -80,6 +80,7 @@
             "deinitializes",
             "rquuse",
             "bsymbolic",
+            "swtpm",
         ]
     },
 
