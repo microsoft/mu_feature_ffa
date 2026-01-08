@@ -16,7 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MmramMemoryReserve.h>
 #include <Guid/MpInformation.h>
 
-#include <libfdt.h>
+#include <Library/FdtLib.h>
 #include <Library/ArmMmuLib.h>
 #include <Library/ArmSvcLib.h>
 #include <Library/DebugLib.h>
@@ -125,10 +125,10 @@ ReadProperty32 (
   OUT UINT32  *Value
   )
 {
-  CONST UINT32  *Property32;
+  CONST FDT_PROPERTY *PropertyPtr; 
 
-  Property32 =  fdt_getprop (DtbAddress, Offset, Property, NULL);
-  if (Property32 == NULL) {
+  PropertyPtr =  FdtGetProperty (DtbAddress, Offset, Property, NULL);
+  if (PropertyPtr == NULL) {
     DEBUG ((
       DEBUG_ERROR,
       "%s: Missing in FF-A boot information manifest\n",
@@ -137,7 +137,7 @@ ReadProperty32 (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Value = fdt32_to_cpu (*Property32);
+  *Value = Fdt32ToCpu ( ReadUnaligned32((UINT32*)PropertyPtr->Data));
 
   return EFI_SUCCESS;
 }
@@ -151,10 +151,11 @@ ReadProperty64 (
   OUT UINT64  *Value
   )
 {
-  CONST UINT64  *Property64;
+  CONST FDT_PROPERTY *PropertyPtr; 
 
-  Property64 =  fdt_getprop (DtbAddress, Offset, Property, NULL);
-  if (Property64 == NULL) {
+
+  PropertyPtr =  FdtGetProperty (DtbAddress, Offset, Property, NULL);
+  if (PropertyPtr == NULL) {
     DEBUG ((
       DEBUG_ERROR,
       "%s: Missing in FF-A boot information manifest\n",
@@ -163,7 +164,8 @@ ReadProperty64 (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Value = fdt64_to_cpu (*Property64);
+  *Value = Fdt32ToCpu ( ReadUnaligned64((UINT64*)PropertyPtr->Data));
+
 
   return EFI_SUCCESS;
 }
@@ -193,7 +195,7 @@ PopulateBootinformation (
   UINT32  EntryPointOffset;
   UINT32  PageSize;
 
-  Offset = fdt_node_offset_by_compatible (DtbAddress, -1, "arm,ffa-manifest-1.0");
+  Offset = FdtNodeOffsetByCompatible (DtbAddress, -1, "arm,ffa-manifest-1.0");
 
   DEBUG ((DEBUG_INFO, "Offset  = %d \n", Offset));
   if (Offset < 0) {

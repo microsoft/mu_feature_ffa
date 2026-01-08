@@ -33,6 +33,7 @@
   StandaloneMmPkg/StandaloneMmPkg.dec
   ArmPkg/ArmPkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
 
 [LibraryClasses]
   BaseLib
