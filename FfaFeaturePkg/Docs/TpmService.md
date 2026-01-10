@@ -39,12 +39,9 @@ contents, the TPM service needs to be invoked via the TPM service's commands/ABI
 
 ## Commands
 
-Only a subset of the commands defined in the CRB over FF-A spec are implemented in the reference
-implementation. Many of the ABIs that are defined in the CRB over FF-A spec are related to
-notifications which are unused in our reference platform. We have a notification service
-which we would use in place of these ABIs. More information about the notification service
-can be found in the Firmware Framework Arm A-Profile (FF-A) specification v1.3 section 18.7
-Inter-partition Setup Protocol.
+Only the required commands defined in the CRB over FF-A spec are implemented in the reference
+implementation. All of the ABIs related to notifications that are defined in the CRB over FF-A
+spec are currently unsupported.
 
 ### Get Interface Version
 
