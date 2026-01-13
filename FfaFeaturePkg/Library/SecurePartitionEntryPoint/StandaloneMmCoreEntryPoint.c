@@ -163,7 +163,7 @@ ReadProperty64 (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Value = Fdt32ToCpu (ReadUnaligned64 ((UINT64 *)PropertyPtr->Data));
+  *Value = Fdt64ToCpu (ReadUnaligned64 ((UINT64 *)PropertyPtr->Data));
 
   return EFI_SUCCESS;
 }
