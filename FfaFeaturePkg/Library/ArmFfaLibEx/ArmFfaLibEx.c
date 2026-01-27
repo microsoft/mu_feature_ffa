@@ -19,7 +19,7 @@
 
 #define INVALID_SOURCE_ID  0xFFFF
 
-STATIC UINT16 mSourceId = INVALID_SOURCE_ID;
+STATIC UINT16  mSourceId = INVALID_SOURCE_ID;
 
 /**
   This function is used to prepare a GUID for FF-A.
@@ -236,7 +236,7 @@ FfaMessageSendDirectReq2 (
   if (mSourceId == INVALID_SOURCE_ID) {
     ArmFfaLibPartitionIdGet (&mSourceId);
   }
-  
+
   ImpDefArgs->FunctionId    = ARM_FID_FFA_MSG_SEND_DIRECT_REQ2;
   ImpDefArgs->SourceId      = mSourceId;
   ImpDefArgs->DestinationId = DestPartId;
