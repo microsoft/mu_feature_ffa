@@ -17,7 +17,9 @@
 #include <Library/ArmFfaLibEx.h>
 #include <Library/PlatformFfaInterruptLib.h>
 
-extern UINT16  gPartId;
+#define INVALID_SOURCE_ID  0xFFFF
+
+STATIC UINT16  mPartitionId = INVALID_SOURCE_ID;
 
 /**
   This function is used to prepare a GUID for FF-A.
@@ -231,8 +233,12 @@ FfaMessageSendDirectReq2 (
   ARM_SXC_ARGS  InputArgs = { 0 };
   ARM_SXC_ARGS  Result    = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   ImpDefArgs->FunctionId    = ARM_FID_FFA_MSG_SEND_DIRECT_REQ2;
-  ImpDefArgs->SourceId      = gPartId;
+  ImpDefArgs->SourceId      = mPartitionId;
   ImpDefArgs->DestinationId = DestPartId;
   if (ServiceGuid != NULL) {
     CopyMem (&(ImpDefArgs->ServiceGuid), ServiceGuid, sizeof (EFI_GUID));
@@ -421,8 +427,12 @@ FfaNotificationSet (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   Request.Arg0 = ARM_FID_FFA_NOTIFICATION_SET;
-  Request.Arg1 = ((UINT32)gPartId << 16) | DestinationId;
+  Request.Arg1 = ((UINT32)mPartitionId << 16) | DestinationId;
   Request.Arg2 = Flags;
   Request.Arg3 = (UINT32)NotificationBitmap;
   Request.Arg4 = (UINT32)(NotificationBitmap >> 32);
@@ -447,8 +457,12 @@ FfaNotificationGet (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   Request.Arg0 = ARM_FID_FFA_NOTIFICATION_GET;
-  Request.Arg1 = ((UINT32)VCpuId << 16) | gPartId;
+  Request.Arg1 = ((UINT32)VCpuId << 16) | mPartitionId;
   Request.Arg2 = Flags;
 
   ArmCallSxc (&Request, &Result);
@@ -550,8 +564,12 @@ FfaNotificationBitmapCreate (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   Request.Arg0 = ARM_FID_FFA_NOTIFICATION_BITMAP_CREATE;
-  Request.Arg1 = gPartId;
+  Request.Arg1 = mPartitionId;
   Request.Arg2 = VCpuCount;
 
   ArmCallSxc (&Request, &Result);
@@ -572,8 +590,12 @@ FfaNotificationBitmapDestroy (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   Request.Arg0 = ARM_FID_FFA_NOTIFICATION_BITMAP_DESTROY;
-  Request.Arg1 = gPartId;
+  Request.Arg1 = mPartitionId;
 
   ArmCallSxc (&Request, &Result);
 
@@ -595,8 +617,12 @@ FfaNotificationBind (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   Request.Arg0 = ARM_FID_FFA_NOTIFICATION_BIND;
-  Request.Arg1 = ((UINT32)DestinationId << 16) | gPartId;
+  Request.Arg1 = ((UINT32)DestinationId << 16) | mPartitionId;
   Request.Arg2 = Flags;
   Request.Arg3 = (UINT32)NotificationBitmap;
   Request.Arg4 = (UINT32)(NotificationBitmap >> 32);
@@ -620,8 +646,12 @@ FfaNotificationUnbind (
   ARM_SXC_ARGS  Request = { 0 };
   ARM_SXC_ARGS  Result  = { 0 };
 
+  if (mPartitionId == INVALID_SOURCE_ID) {
+    ArmFfaLibPartitionIdGet (&mPartitionId);
+  }
+
   Request.Arg0 = ARM_FID_FFA_NOTIFICATION_UNBIND;
-  Request.Arg1 = ((UINT32)DestinationId << 16) | gPartId;
+  Request.Arg1 = ((UINT32)DestinationId << 16) | mPartitionId;
   Request.Arg2 = 0;
   Request.Arg3 = (UINT32)NotificationBitmap;
   Request.Arg4 = (UINT32)(NotificationBitmap >> 32);
