@@ -58,7 +58,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         ''' return iterable of edk2 architectures supported by this build '''
         return ("IA32",
                 "X64",
-                "ARM",
                 "AARCH64")
 
     def GetTargetsSupported(self):
@@ -134,8 +133,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             if is_linux and self.ActualToolChainTag.upper().startswith("GCC"):
                 if "AARCH64" in self.ActualArchitectures:
                     scopes += ("gcc_aarch64_linux",)
-                if "ARM" in self.ActualArchitectures:
-                    scopes += ("gcc_arm_linux",)
                 if "RISCV64" in self.ActualArchitectures:
                     scopes += ("gcc_riscv64_unknown",)
 
@@ -188,17 +185,8 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             {
                 "Path": "MU_BASECORE",
                 "Url": "https://github.com/microsoft/mu_basecore.git",
-                "Branch": "release/202502"
-            },
-            {
-                "Path": "Silicon/Arm/MU_TIANO",
-                "Url": "https://github.com/Microsoft/mu_silicon_arm_tiano.git",
-                "Branch": "release/202502"
-            },
-            {
-                "Path": "Common/MU_TIANO",
-                "Url": "https://github.com/Microsoft/mu_tiano_plus.git",
-                "Branch": "release/202502"
+                "Branch": "release/202511",
+                "Recurse": {"CIFile": ".pytool/CISettings.py"}
             }
         ]
 
