@@ -11,7 +11,7 @@
 [Defines]
   INF_VERSION                    = 1.29
   BASE_NAME                      = ArmFfaLibEx
-  FILE_GUID                      = CC121A12-7C90-46BB-89B8-5F5BAEEFFF12
+  FILE_GUID                      = F5A2FC1F-6869-4E45-A865-9CD50FBC6DFC
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = ArmFfaLibEx
