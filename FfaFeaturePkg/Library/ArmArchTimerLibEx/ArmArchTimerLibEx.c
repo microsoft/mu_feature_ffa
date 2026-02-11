@@ -56,6 +56,11 @@ MicroSecondDelay (
   UINT64  TimerTicks64;
   UINT64  SystemCounterVal;
 
+  // MU_CHANGE - Start - Cannot depend on GenericTimer Calls
+  //  UINT64  PreviousSystemCounterVal;
+  //  UINT64  DeltaCounterVal;
+  // MU_CHANGE - End - Cannot depend on GenericTimer Calls
+
   // Calculate counter ticks that represent requested delay:
   //  = MicroSeconds x TICKS_PER_MICRO_SEC
   //  = MicroSeconds x Frequency.10^-6
@@ -67,10 +72,24 @@ MicroSecondDelay (
                    1000000U
                    );
 
+  // MU_CHANGE - Start - Cannot depend on GenericTimer Calls
+  //  // Read System Counter value
+  //  PreviousSystemCounterVal = ArmGenericTimerGetSystemCount ();
+  //
+  //  // Wait until delay count expires.
+  //  while (TimerTicks64 > 0) {
+  //    SystemCounterVal = ArmGenericTimerGetSystemCount ();
+  //    // Get how much we advanced this tick. Wrap around still has delta correct
+  //    DeltaCounterVal = (SystemCounterVal - PreviousSystemCounterVal)
+  //                      & (MAX_UINT64 >> 8); // Account for a lesser (minimum) size
+  //    // Never wrap back around below zero by choosing the min and thus stop at 0
+  //    TimerTicks64            -= MIN (TimerTicks64, DeltaCounterVal);
+  //    PreviousSystemCounterVal = SystemCounterVal;
   // Wait until delay count expires.
   SystemCounterVal = 0;
   while (SystemCounterVal < TimerTicks64) {
     SystemCounterVal++;
+    // MU_CHANGE - End - Cannot depend on GenericTimer Calls
   }
 
   return MicroSeconds;
@@ -191,7 +210,7 @@ GetTimeInNanoSecond (
   UINT64  Remainder;
   UINT64  TimerFreq;
 
-  TimerFreq = (UINT32)GetPlatformTimerFreq ();  // MU_CHANGE - ARM64 VS change
+  TimerFreq = GetPlatformTimerFreq ();
   //
   //          Ticks
   // Time = --------- x 1,000,000,000
