@@ -5,8 +5,7 @@
 #
 #**/
 
-#Override : 00000002 | ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf | db71fa8c3bf46f20bcc0119303b854e6 | 2025-05-16T06-15-04 | 1abd9da5b6f5c85089b20eae81285d978709c9bc
-
+#Override : 00000002 | ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf | 9028122c05affaa65b79cda8ba77dc99 | 2026-02-11T21-07-07 | 0f1e1aefb756eb37248d43a43eac8fc18c0a0c4a
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = ArmArchTimerLibEx
@@ -28,3 +27,5 @@
   ArmLib
   BaseLib
   ArmGenericTimerCounterLib
+
+[Pcd]
