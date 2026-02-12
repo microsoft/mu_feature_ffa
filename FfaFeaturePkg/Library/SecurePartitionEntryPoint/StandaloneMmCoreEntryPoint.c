@@ -17,7 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MpInformation.h>
 
 #include <Library/FdtLib.h>
-#include <Library/ArmMmuLib.h>
+#include <Library/MmuLib.h>
 #include <Library/ArmSvcLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>

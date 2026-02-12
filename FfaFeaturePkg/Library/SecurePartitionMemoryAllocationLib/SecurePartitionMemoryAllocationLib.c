@@ -10,8 +10,8 @@
 
 #include <PiMm.h>
 
-#include <libfdt.h>
-
+#include <Library/FdtLib.h>
+#include <Library/BaseLib.h>
 #include <Guid/MmramMemoryReserve.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/SecurePartitionServicesTableLib.h>
@@ -840,10 +840,16 @@ ReadProperty32 (
   OUT UINT32  *Value
   )
 {
-  CONST UINT32  *Property32;
+  CONST FDT_PROPERTY  *PropertyPtr;
+  INT32               Len;
 
-  Property32 =  fdt_getprop (DtbAddress, Offset, Property, NULL);
-  if (Property32 == NULL) {
+  PropertyPtr = FdtGetProperty (
+                  DtbAddress,
+                  Offset,
+                  Property,
+                  &Len
+                  );
+  if (PropertyPtr == NULL) {
     DEBUG ((
       DEBUG_ERROR,
       "%a: Missing in FF-A boot information manifest\n",
@@ -852,7 +858,7 @@ ReadProperty32 (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Value = fdt32_to_cpu (*Property32);
+  *Value = Fdt32ToCpu (ReadUnaligned32 ((UINT32 *)PropertyPtr->Data));
 
   return EFI_SUCCESS;
 }
@@ -866,10 +872,11 @@ ReadProperty64 (
   OUT UINT64  *Value
   )
 {
-  CONST UINT64  *Property64;
+  CONST FDT_PROPERTY  *PropertyPtr;
+  INT32               Len;
 
-  Property64 =  fdt_getprop (DtbAddress, Offset, Property, NULL);
-  if (Property64 == NULL) {
+  PropertyPtr = FdtGetProperty (DtbAddress, Offset, Property, &Len);
+  if (PropertyPtr == NULL) {
     DEBUG ((
       DEBUG_ERROR,
       "%a: Missing in FF-A boot information manifest\n",
@@ -878,7 +885,7 @@ ReadProperty64 (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Value = fdt64_to_cpu (*Property64);
+  *Value = Fdt64ToCpu (ReadUnaligned64 ((UINT64 *)PropertyPtr->Data));
 
   return EFI_SUCCESS;
 }
@@ -892,15 +899,15 @@ CheckDescription (
   OUT UINT32  Size
   )
 {
-  CONST CHAR8  *Property;
-  INT32        LenP;
+  CONST FDT_PROPERTY  *PropertyPtr;
+  INT32               LenP;
 
-  Property = fdt_getprop (DtbAddress, Offset, "description", &LenP);
-  if (Property == NULL) {
+  PropertyPtr = FdtGetProperty (DtbAddress, Offset, "description", &LenP);
+  if (PropertyPtr == NULL) {
     return FALSE;
   }
 
-  return CompareMem (Description, Property, MIN (Size, (UINT32)LenP)) == 0;
+  return CompareMem (Description, PropertyPtr->Data, MIN (Size, (UINT32)LenP)) == 0;
 }
 
 STATIC
@@ -996,11 +1003,11 @@ MemoryAllocationLibConstructor (
   DtbAddress = gSpst->FDTAddress;
   DEBUG ((DEBUG_INFO, "%a - 0x%x\n", __func__, DtbAddress));
 
-  Offset = fdt_node_offset_by_compatible (DtbAddress, -1, "arm,ffa-manifest-1.0");
+  Offset = FdtNodeOffsetByCompatible (DtbAddress, -1, "arm,ffa-manifest-1.0");
 
   DEBUG ((DEBUG_INFO, "Offset  = %d \n", Offset));
 
-  Offset = fdt_subnode_offset_namelen (
+  Offset = FdtSubnodeOffsetNameLen (
              DtbAddress,
              Offset,
              "memory-regions",
@@ -1017,9 +1024,9 @@ MemoryAllocationLibConstructor (
 
   DEBUG ((DEBUG_INFO, "mem region offset  = %d \n", Offset));
 
-  for (Node = fdt_first_subnode (DtbAddress, Offset);
+  for (Node = FdtFirstSubnode (DtbAddress, Offset);
        Node >= 0;
-       Node = fdt_next_subnode (DtbAddress, Node))
+       Node = FdtNextSubnode (DtbAddress, Node))
   {
     Result = ReadRegionInfo (
                DtbAddress,

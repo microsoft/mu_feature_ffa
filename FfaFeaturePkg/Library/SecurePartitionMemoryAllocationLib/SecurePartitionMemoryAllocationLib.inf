@@ -41,6 +41,7 @@
   FfaFeaturePkg/FfaFeaturePkg.dec
 
 [LibraryClasses]
+  BaseLib
   BaseMemoryLib
   DebugLib
   FdtLib
