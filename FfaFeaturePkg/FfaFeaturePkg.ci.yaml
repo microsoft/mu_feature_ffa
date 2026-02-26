@@ -27,7 +27,8 @@
             "SecurityPkg/SecurityPkg.dec",
             "StandaloneMmPkg/StandaloneMmPkg.dec",
             "FfaFeaturePkg/FfaFeaturePkg.dec",
-            "EmbeddedPkg/EmbeddedPkg.dec"
+            "EmbeddedPkg/EmbeddedPkg.dec",
+            "UefiCpuPkg/UefiCpuPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
