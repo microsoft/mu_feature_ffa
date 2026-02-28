@@ -15,18 +15,31 @@ fn main() {
 }
 
 #[cfg(target_os = "none")]
-#[embassy_executor::main(executor = "embassy_aarch64_haf::Executor")]
-async fn embassy_main(_spawner: embassy_executor::Spawner) {
+fn main() -> ! {
     use ec_service_lib::service_list;
+    use ec_service_lib::services::{TpmService, TpmSst};
     use test_service_lib::test_svc::Test;
+    use odp_ffa::Function;
 
     log::info!("QEMU Secure Partition - build time: {}", env!("BUILD_TIME"));
+    let version = odp_ffa::Version::new().exec().unwrap();
+    log::info!("FFA version: {}.{}", version.major(), version.minor());
+
+    // Initialize the TPM service with its state-translation backend.
+    let mut tpm_service = TpmService::new(TpmSst::new());
+
+    // SAFETY: Writes to the memory-mapped internal CRB regions and initializes
+    //         the SST layer for the external TPM device.
+    unsafe { tpm_service.init(0x10000200000) };
+
     service_list![
         ec_service_lib::services::FwMgmt::new(),
         ec_service_lib::services::Notify::new(),
+        tpm_service,
         Test::new(),
     ]
-    .run_message_loop(async |_| Ok(()))
-    .await
+    .run_message_loop(|_| Ok(()))
     .expect("Error in run_message_loop");
+
+    unreachable!()
 }

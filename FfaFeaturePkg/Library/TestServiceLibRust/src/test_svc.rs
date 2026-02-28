@@ -66,7 +66,7 @@ impl Service for Test {
         UUID
     }
 
-    async fn ffa_msg_send_direct_req2(&mut self, msg: MsgSendDirectReq2) -> Result<MsgSendDirectResp2> {
+    fn ffa_msg_send_direct_req2(&mut self, msg: MsgSendDirectReq2) -> Result<MsgSendDirectResp2> {
         let cmd = msg.u64_at(0);
         debug!("Received Test command 0x{:x}", cmd);
 
