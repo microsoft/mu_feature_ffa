@@ -14,11 +14,10 @@ aarch64-rt = { version = "0.2.2", default-features = false, features = [
     "el1",
     "exceptions",
 ] }
-embassy-executor = { version = "0.9.1" }
-embassy-aarch64-haf = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
-ec-service-lib = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
-odp-ffa = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
-hafnium = { git = "https://github.com/OpenDevicePartnership/haf-ec-service", rev = "76683a18" }
+aarch64-haf = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "da5078b3" }
+ec-service-lib = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "da5078b3" }
+odp-ffa = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "da5078b3" }
+hafnium = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "da5078b3" }
 log = { version = "0.4", default-features = false }
 uuid = { version = "1.0", default-features = false, features = ["v1"] }
 test-service-lib = { path = "FfaFeaturePkg/Library/TestServiceLibRust" }
