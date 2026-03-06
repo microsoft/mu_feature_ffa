@@ -1,6 +1,6 @@
 use ec_service_lib::{Result, Service};
 use log::{debug, error};
-use odp_ffa::{MsgSendDirectReq2, MsgSendDirectResp2, Payload, RegisterPayload};
+use odp_ffa::{DirectMessagePayload, HasRegisterPayload, MsgSendDirectReq2, MsgSendDirectResp2};
 use odp_ffa::{Function, NotificationSet};
 use uuid::{uuid, Uuid};
 
@@ -17,9 +17,9 @@ struct GenericRsp {
     status: i64,
 }
 
-impl From<GenericRsp> for RegisterPayload {
+impl From<GenericRsp> for DirectMessagePayload {
     fn from(value: GenericRsp) -> Self {
-        RegisterPayload::from_iter(value.status.to_le_bytes())
+        DirectMessagePayload::from_iter(value.status.to_le_bytes())
     }
 }
 
@@ -33,8 +33,9 @@ impl Test {
 
     fn notification_handler(&self, msg: &MsgSendDirectReq2) -> GenericRsp {
         // Grab the uuid from the message, they will be at x5 and x6
-        let sender_uuid = Uuid::from_u128_le(((msg.register_at(2) as u128) << 64) | (msg.register_at(1) as u128));
-        let cookie = msg.register_at(3);
+        let payload = msg.payload();
+        let sender_uuid = Uuid::from_u128_le(((payload.register_at(2) as u128) << 64) | (payload.register_at(1) as u128));
+        let cookie = payload.register_at(3);
         let flag = 1 << DELAYED_SRI_BIT_POS;
         let bit_pos = 1 << cookie;
 
@@ -55,23 +56,17 @@ impl Test {
     }
 }
 
-const UUID: Uuid = uuid!("e0fad9b3-7f5c-42c5-b2ee-b7a82313cdb2");
-
 impl Service for Test {
-    fn service_name(&self) -> &'static str {
-        "Test"
-    }
-
-    fn service_uuid(&self) -> Uuid {
-        UUID
-    }
+    const UUID: Uuid = uuid!("e0fad9b3-7f5c-42c5-b2ee-b7a82313cdb2");
+    const NAME: &'static str = "Test";
 
     fn ffa_msg_send_direct_req2(&mut self, msg: MsgSendDirectReq2) -> Result<MsgSendDirectResp2> {
-        let cmd = msg.u64_at(0);
+        let payload = msg.payload();
+        let cmd = payload.u64_at(0);
         debug!("Received Test command 0x{:x}", cmd);
 
         let payload = match cmd {
-            TEST_OPCODE_TEST_NOTIFICATION => RegisterPayload::from(self.notification_handler(&msg)),
+            TEST_OPCODE_TEST_NOTIFICATION => DirectMessagePayload::from(self.notification_handler(&msg)),
             _ => {
                 error!("Unknown Test Command: {}", cmd);
                 return Err(odp_ffa::Error::Other("Unknown Test Command"));
