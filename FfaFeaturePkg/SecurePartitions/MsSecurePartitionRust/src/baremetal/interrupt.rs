@@ -1,10 +1,10 @@
-use embassy_aarch64_haf::{haf_interrupt_handler_impl, HafInterruptHandler};
+use aarch64_haf::{haf_interrupt_handler_impl, HafInterruptHandler};
 
-pub struct QemuInterriptHandler;
+pub struct QemuInterruptHandler;
 
-impl HafInterruptHandler for QemuInterriptHandler {
+impl HafInterruptHandler for QemuInterruptHandler {
     fn handle(&self, haf_interrupt_id: hafnium::InterruptId) {
         log::info!("QEMU Interrupt: {:?}", haf_interrupt_id);
     }
 }
-haf_interrupt_handler_impl!(static IRQ_HANDLER: QemuInterriptHandler = QemuInterriptHandler);
+haf_interrupt_handler_impl!(static IRQ_HANDLER: QemuInterruptHandler = QemuInterruptHandler);
