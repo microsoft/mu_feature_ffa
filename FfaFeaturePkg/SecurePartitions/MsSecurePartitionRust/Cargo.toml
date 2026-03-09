@@ -22,8 +22,6 @@ hafnium.workspace = true
 
 [dependencies]
 odp-ffa.workspace = true
-aarch64-haf = { workspace = true, optional = true }
-hafnium = { workspace = true, optional = true }
 log.workspace = true
 
 [build-dependencies]
