@@ -147,8 +147,6 @@
 
   FfaFeaturePkg/Library/ArmArchTimerLibEx/ArmArchTimerLibEx.inf
 
-  FfaFeaturePkg/SecurePartitions/MsSecurePartition/MsSecurePartition.inf
-
 [Components.AARCH64]
   FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
 
