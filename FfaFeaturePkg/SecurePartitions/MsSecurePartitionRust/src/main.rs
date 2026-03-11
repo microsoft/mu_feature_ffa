@@ -17,7 +17,10 @@ fn main() {
 #[cfg(target_os = "none")]
 fn main() -> ! {
     use ec_service_lib::MessageHandler;
+    #[cfg(feature = "tpm")]
     use ec_service_lib::services::{TpmService, TpmSst};
+    #[cfg(not(feature = "tpm"))]
+    use ec_service_lib::services::TpmServiceStub;
     use test_service_lib::test_svc::Test;
     use odp_ffa::Function;
 
@@ -25,12 +28,18 @@ fn main() -> ! {
     let version = odp_ffa::Version::new().exec().unwrap();
     log::info!("FFA version: {}.{}", version.major(), version.minor());
 
-    // Initialize the TPM service with its state-translation backend.
-    let mut tpm_service = TpmService::new(TpmSst::new());
+    #[cfg(feature = "tpm")]
+    let tpm_service = {
+        // Initialize the TPM service with its state-translation backend.
+        let mut svc = TpmService::new(TpmSst::new());
 
-    // SAFETY: Writes to the memory-mapped internal CRB regions and initializes
-    //         the SST layer for the external TPM device.
-    unsafe { tpm_service.init(0x10000200000) };
+        // SAFETY: Writes to the memory-mapped internal CRB regions and initializes
+        //         the SST layer for the external TPM device.
+        unsafe { svc.init(0x10000200000) };
+        svc
+    };
+    #[cfg(not(feature = "tpm"))]
+    let tpm_service = TpmServiceStub::new();
 
     MessageHandler::new()
         .append(ec_service_lib::services::FwMgmt::new())
