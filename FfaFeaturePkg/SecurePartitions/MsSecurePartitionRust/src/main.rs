@@ -35,7 +35,7 @@ fn main() -> ! {
 
         // SAFETY: Writes to the memory-mapped internal CRB regions and initializes
         //         the SST layer for the external TPM device.
-        unsafe { svc.init(0x10000200000) };
+        unsafe { svc.init(0x40200000) };
         svc
     };
     #[cfg(not(feature = "tpm"))]

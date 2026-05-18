@@ -10,7 +10,7 @@ keywords = ["arm", "aarch64", "cortex-a"]
 categories = ["no-std"]
 
 [features]
-default = []
+default = ["tpm"]
 tpm = []
 
 [target.'cfg(target_os = "none")'.dependencies]
