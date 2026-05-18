@@ -29,13 +29,13 @@ fn main() -> ! {
     log::info!("FFA version: {}.{}", version.major(), version.minor());
 
     #[cfg(feature = "tpm")]
-    // Non-secure CRB region shared between non-secure world and secure world.
-    let tpm_internal_crb_address: u64 = 0x10000200000;
-    // Secure CRB region only accessible by the TPM service.
-    let tpm_external_crb_address: u64 = 0x60120000;
-    log::info!("TPM Internal CRB Address: {:X}", tpm_internal_crb_address);
-    log::info!("TPM External CRB Address: {:X}", tpm_external_crb_address);
     let tpm_service = {
+        // Non-secure CRB region shared between non-secure world and secure world.
+        let tpm_internal_crb_address: u64 = 0x10000200000;
+        // Secure CRB region only accessible by the TPM service.
+        let tpm_external_crb_address: u64 = 0x60120000;
+        log::info!("TPM Internal CRB Address: {:X}", tpm_internal_crb_address);
+        log::info!("TPM External CRB Address: {:X}", tpm_external_crb_address);
         // Initialize the TPM service with its state-translation backend.
         let mut svc = TpmService::new(TpmSst::new());
 
@@ -44,6 +44,7 @@ fn main() -> ! {
         unsafe { svc.init(tpm_internal_crb_address, tpm_external_crb_address) };
         svc
     };
+
     #[cfg(not(feature = "tpm"))]
     let tpm_service = TpmServiceStub::new();
 
