@@ -23,7 +23,7 @@ uuid = { version = "1.0", default-features = false, features = ["v1"] }
 test-service-lib = { path = "FfaFeaturePkg/Library/TestServiceLibRust" }
 
 [patch."https://github.com/OpenDevicePartnership/odp-secure-services"]
-ec-service-lib = { path = "/home/test/haf-ec-service/ec-service-lib" }
-odp-ffa = { path = "/home/test/haf-ec-service/odp-ffa" }
-aarch64-haf = { path = "/home/test/haf-ec-service/aarch64-haf" }
-hafnium = { path = "/home/test/haf-ec-service/hafnium" }
+ec-service-lib = { path = "/home/test/odp-secure-services/ec-service-lib" }
+odp-ffa = { path = "/home/test/odp-secure-services/odp-ffa" }
+aarch64-haf = { path = "/home/test/odp-secure-services/aarch64-haf" }
+hafnium = { path = "/home/test/odp-secure-services/hafnium" }
