@@ -46,7 +46,7 @@ impl Test {
         // let notify_msg = MsgSendDirectReq2::new(
         //     Function::Notify,
         //     0)
-        NotificationSet::new(msg.source_id(), msg.destination_id(), flag, bit_pos)
+        NotificationSet::new(msg.destination_id(), msg.source_id(), flag, bit_pos)
             .exec()
             .unwrap();
 

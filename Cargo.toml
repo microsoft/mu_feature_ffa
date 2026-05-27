@@ -14,16 +14,10 @@ aarch64-rt = { version = "0.2.2", default-features = false, features = [
     "el1",
     "exceptions",
 ] }
-aarch64-haf = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "79e24eca" }
-ec-service-lib = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "79e24eca" }
-odp-ffa = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "79e24eca" }
-hafnium = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "79e24eca" }
+aarch64-haf = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "54439c76" }
+ec-service-lib = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "54439c76" }
+odp-ffa = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "54439c76" }
+hafnium = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "54439c76" }
 log = { version = "0.4", default-features = false }
 uuid = { version = "1.0", default-features = false, features = ["v1"] }
 test-service-lib = { path = "FfaFeaturePkg/Library/TestServiceLibRust" }
-
-[patch."https://github.com/OpenDevicePartnership/odp-secure-services"]
-ec-service-lib = { path = "/home/test/odp-secure-services/ec-service-lib" }
-odp-ffa = { path = "/home/test/odp-secure-services/odp-ffa" }
-aarch64-haf = { path = "/home/test/odp-secure-services/aarch64-haf" }
-hafnium = { path = "/home/test/odp-secure-services/hafnium" }

@@ -30,14 +30,21 @@ fn main() -> ! {
 
     #[cfg(feature = "tpm")]
     let tpm_service = {
+        // Non-secure CRB region shared between non-secure world and secure world.
+        let tpm_internal_crb_address: u64 = 0x40200000;
+        // Secure CRB region only accessible by the TPM service.
+        let tpm_external_crb_address: u64 = 0x0c000000;
+        log::info!("TPM Internal CRB Address: {:X}", tpm_internal_crb_address);
+        log::info!("TPM External CRB Address: {:X}", tpm_external_crb_address);
         // Initialize the TPM service with its state-translation backend.
         let mut svc = TpmService::new(TpmSst::new());
 
         // SAFETY: Writes to the memory-mapped internal CRB regions and initializes
         //         the SST layer for the external TPM device.
-        unsafe { svc.init(0x40200000) };
+        unsafe { svc.init(tpm_internal_crb_address, tpm_external_crb_address) };
         svc
     };
+
     #[cfg(not(feature = "tpm"))]
     let tpm_service = TpmServiceStub::new();
 
