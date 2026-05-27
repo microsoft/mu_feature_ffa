@@ -44,9 +44,17 @@ jobs:
       - name: Build Secure Partitions
         run: |
           mkdir -p ${{ env.OUTOUTPUT_DIR }}
+
+          # TPM-disabled (default features) build
           cargo build --target=${{ env.BUILD_TARGET }}
           cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
           cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
+
+          # TPM-enabled build
+          cargo build --target=${{ env.BUILD_TARGET }} --features tpm
+          cargo objcopy --target=${{ env.BUILD_TARGET }} --features tpm -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-tpm.bin
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-tpm.elf
+
           cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
 
       - name: Package Files
