@@ -15,8 +15,8 @@ fn main() {
         println!("cargo:rustc-env=BUILD_TIME={}", chrono::Utc::now().to_rfc3339());
         println!("cargo:rustc-link-arg=-TFfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/image.ld");
         println!("cargo:rustc-link-arg=-T{qemu_linker}");
-        println!("cargo:rerun-if-changed=FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/image.ld");
         println!("cargo:rerun-if-changed={qemu_linker}");
+        println!("cargo:rerun-if-changed=FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/image.ld");
         println!("cargo:rerun-if-env-changed=CARGO_FEATURE_ARMVIRT");
     }
 }
