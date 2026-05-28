@@ -31,9 +31,14 @@ fn main() -> ! {
     #[cfg(feature = "tpm")]
     let tpm_service = {
         // Non-secure CRB region shared between non-secure world and secure world.
-        let tpm_internal_crb_address: u64 = 0x40200000;
         // Secure CRB region only accessible by the TPM service.
-        let tpm_external_crb_address: u64 = 0x0c000000;
+        // Addresses differ between the QEMU arm-virt and SBSA-ref platforms.
+        #[cfg(feature = "armvirt")]
+        let (tpm_internal_crb_address, tpm_external_crb_address): (u64, u64) =
+            (0x40200000, 0x0c000000);
+        #[cfg(not(feature = "armvirt"))]
+        let (tpm_internal_crb_address, tpm_external_crb_address): (u64, u64) =
+            (0x10000200000, 0x60120000);
         log::info!("TPM Internal CRB Address: {:X}", tpm_internal_crb_address);
         log::info!("TPM External CRB Address: {:X}", tpm_external_crb_address);
         // Initialize the TPM service with its state-translation backend.

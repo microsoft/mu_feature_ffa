@@ -45,15 +45,25 @@ jobs:
         run: |
           mkdir -p ${{ env.OUTOUTPUT_DIR }}
 
-          # TPM-disabled (default features) build
+          # SBSA (default), TPM-disabled
           cargo build --target=${{ env.BUILD_TARGET }}
-          cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
-          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
+          cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-sbsa-non-tpm.bin
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-sbsa-non-tpm.elf
 
-          # TPM-enabled build
+          # SBSA (default), TPM-enabled
           cargo build --target=${{ env.BUILD_TARGET }} --features tpm
-          cargo objcopy --target=${{ env.BUILD_TARGET }} --features tpm -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-tpm.bin
-          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-tpm.elf
+          cargo objcopy --target=${{ env.BUILD_TARGET }} --features tpm -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-sbsa-tpm.bin
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-sbsa-tpm.elf
+
+          # arm-virt, TPM-disabled
+          cargo build --target=${{ env.BUILD_TARGET }} --features armvirt
+          cargo objcopy --target=${{ env.BUILD_TARGET }} --features armvirt -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-non-tpm.bin
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-non-tpm.elf
+
+          # arm-virt, TPM-enabled
+          cargo build --target=${{ env.BUILD_TARGET }} --features "armvirt tpm"
+          cargo objcopy --target=${{ env.BUILD_TARGET }} --features "armvirt tpm" -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-tpm.bin
+          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-tpm.elf
 
           cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock
 

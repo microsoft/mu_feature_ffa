@@ -12,6 +12,9 @@ categories = ["no-std"]
 [features]
 default = []
 tpm = []
+# Build for the QEMU arm-virt platform. When this feature is not enabled,
+# the partition is built for the QEMU SBSA-ref platform (default).
+armvirt = []
 
 [target.'cfg(target_os = "none")'.dependencies]
 aarch64-rt.workspace = true
