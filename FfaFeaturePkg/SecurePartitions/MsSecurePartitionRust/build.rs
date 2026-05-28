@@ -16,8 +16,7 @@ fn main() {
         println!("cargo:rustc-link-arg=-TFfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/image.ld");
         println!("cargo:rustc-link-arg=-T{qemu_linker}");
         println!("cargo:rerun-if-changed=FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/image.ld");
-        println!("cargo:rerun-if-changed=FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/qemu-sbsa.ld");
-        println!("cargo:rerun-if-changed=FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/linker/qemu-armvirt.ld");
+        println!("cargo:rerun-if-changed={qemu_linker}");
         println!("cargo:rerun-if-env-changed=CARGO_FEATURE_ARMVIRT");
     }
 }
