@@ -67,7 +67,8 @@ The following are the steps needed to create a secure partition:
 5. Create the .dts file for your secure partition and place it in the Platforms/QemuArmVirtPkg/fdts directory. If overriding
    the MsSecurePartition, the qemu_virt_mssp_config.dts can be updated with the settings related to your secure partition
    Note that only S-EL0 partitions are supported at this time.
-6. Update the .dts in TFA to include your secure partition and its info. The file is specified through `QEMU_TOS_FW_CONFIG_DTS` for Arm Virt platforms. The file can be found at Platforms/QemuArmVirtPkg/fdts/qemu_virt_tb_fw_config.dts.
+6. Update the .dts in TFA to include your secure partition and its info. The file is specified through `QEMU_TOS_FW_CONFIG_DTS`
+   for Arm Virt platforms. The file can be found at Platforms/QemuArmVirtPkg/fdts/qemu_virt_tb_fw_config.dts.
 
    ```text
    secure-partitions {
