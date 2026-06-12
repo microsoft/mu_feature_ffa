@@ -45,24 +45,14 @@ jobs:
         run: |
           mkdir -p ${{ env.OUTOUTPUT_DIR }}
 
-          # SBSA (default), TPM-disabled
-          cargo build --target=${{ env.BUILD_TARGET }}
-          cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp.bin
-          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp.elf
-
-          # SBSA (default), TPM-enabled
-          cargo build --target=${{ env.BUILD_TARGET }} --features tpm
-          cargo objcopy --target=${{ env.BUILD_TARGET }} --features tpm -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-tpm.bin
-          cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-tpm.elf
-
           # arm-virt, TPM-disabled
-          cargo build --target=${{ env.BUILD_TARGET }} --features armvirt
-          cargo objcopy --target=${{ env.BUILD_TARGET }} --features armvirt -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt.bin
+          cargo build --target=${{ env.BUILD_TARGET }}
+          cargo objcopy --target=${{ env.BUILD_TARGET }} -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt.bin
           cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt.elf
 
           # arm-virt, TPM-enabled
-          cargo build --target=${{ env.BUILD_TARGET }} --features "armvirt tpm"
-          cargo objcopy --target=${{ env.BUILD_TARGET }} --features "armvirt tpm" -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-tpm.bin
+          cargo build --target=${{ env.BUILD_TARGET }} --features tpm
+          cargo objcopy --target=${{ env.BUILD_TARGET }} --features tpm -- -O binary ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-tpm.bin
           cp target/${{ env.BUILD_TARGET }}/debug/msft-sp ${{ env.OUTOUTPUT_DIR }}/msft-sp-virt-tpm.elf
 
           cp Cargo.lock ${{ env.OUTOUTPUT_DIR }}/Cargo.lock

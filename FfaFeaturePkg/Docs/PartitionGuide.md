@@ -11,19 +11,19 @@ manages. Secure partitions can be set to run at S-EL0 or S-EL1 with S-EL1 provid
 
 The following are the steps needed to create a secure partition:
 
-1. Create a new folder for your secure partition in the Platforms/QemuSbsaPkg directory making sure to give it a relevant
+1. Create a new folder for your secure partition in the Platforms/QemuArmVirtPkg directory making sure to give it a relevant
    name.
 2. Create the two necessary files: a .c which will contain the implementation for the secure partition and a .inf which
    will be used to launch the secure partition similar to a DXE driver.
 3. Generate a UUID/GUID for your secure partition, this will distinguish it from other secure partitions.
-4. Add the .inf to the QemuSbsaPkg.dsc and .fdf files. If overriding the MsSecurePartition, just replace all instances
+4. Add the .inf to the QemuArmVirtPkg.dsc and .fdf files. If overriding the MsSecurePartition, just replace all instances
    with your secure partition. If wanting to add another secure partition, you will need to add new sections to the .fdf
    and PlatformBuild.py script to generate a new FV for your secure partition similar to [\FV.FV_STANDALONE_MM_SECURE_PARTITION1].
 
    .dsc example:
 
    ```bash
-   QemuSbsaPkg/MsSecurePartition/MsSecurePartition.inf {
+   QemuArmVirtPkg/MsSecurePartition/MsSecurePartition.inf {
     <LibraryClasses>
       MemoryAllocationLib|MdeModulePkg/Library/BaseMemoryAllocationLibNull/BaseMemoryAllocationLibNull.inf
       StandaloneMmCoreEntryPoint|ArmPkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
@@ -61,25 +61,25 @@ The following are the steps needed to create a secure partition:
    READ_LOCK_CAP      = TRUE
    READ_LOCK_STATUS   = TRUE
 
-    INF QemuSbsaPkg/MsSecurePartition/MsSecurePartition.inf
+    INF QemuArmVirtPkg/MsSecurePartition/MsSecurePartition.inf
    ```
 
-5. Create the .dts file for your secure partition and place it in the Platforms/QemuSbsa/Pkg/fdts directory. If overriding
-   the MsSecurePartition, the qemu_sbsa_mssp_config.dts can be updated with the settings related to your secure partition
+5. Create the .dts file for your secure partition and place it in the Platforms/QemuArmVirtPkg/fdts directory. If overriding
+   the MsSecurePartition, the qemu_virt_mssp_config.dts can be updated with the settings related to your secure partition
    Note that only S-EL0 partitions are supported at this time.
-6. Update the .dts in TFA to include your secure partition and its info. The file can be found at Silicon/Arm/TFA/plat/qemu/qemu_sbsa/fdts.
+6. Update the .dts in TFA to include your secure partition and its info. The file is specified through `QEMU_TOS_FW_CONFIG_DTS` for Arm Virt platforms. The file can be found at Platforms/QemuArmVirtPkg/fdts/qemu_virt_tb_fw_config.dts.
 
    ```text
    secure-partitions {
     compatible = "arm,sp";
     stmm {
       uuid = "eaba83d8-baaf-4eaf-8144-f7fdcbe544a7";
-      load-address = <0x20002000>;
+      load-address = <0x0e400000>;
       owner = "Plat";
     };
-    mssp {
-      uuid = "b8bcbd0c-8e8f-4ebe-99eb-3cbbdd0cd412";
-      load-address = <0x20400000>;
+    example_rust {
+      uuid = "AFF0C73B-47E7-4A5B-AFFC-0052305A6520";
+      load-address = <0x0e700000>;
       owner = "Plat";
     };
    };

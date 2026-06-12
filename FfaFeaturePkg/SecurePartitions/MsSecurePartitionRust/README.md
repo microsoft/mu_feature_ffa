@@ -6,25 +6,22 @@ An implementation of Inter-Partition secure partition based on QEMU haf-ec-servi
 
 ## Cargo features
 
-- `armvirt` — target QEMU `arm-virt` instead of the default `sbsa-ref` (selects the
-  matching `linker/qemu-*.ld` MEMORY layout and the platform's TPM CRB addresses).
-- `tpm` — enable the TPM service.
+- `tpm` — enable the TPM service and use the TPM CRB addresses for the selected target.
 
-The four supported combinations produce one binary each: SBSA / arm-virt × TPM-on / TPM-off.
+The four supported combinations produce one binary each: TPM-on / TPM-off.
 
 ## Building
 
-Default build (SBSA-ref, no TPM):
+Default build (ARM Virt, no TPM):
 
 ```bash
 cargo build --target=aarch64-unknown-none
-cargo objcopy --target=aarch64-unknown-none -- -O binary target/aarch64-unknown-none/debug/msft-sp.bin
+cargo objcopy --target=aarch64-unknown-none -- -O binary target/aarch64-unknown-none/debug/msft-sp-virt.bin
 ```
 
 Other variants — add the relevant features:
 
 ```bash
-cargo build --target=aarch64-unknown-none --features tpm              # sbsa + tpm
-cargo build --target=aarch64-unknown-none --features armvirt          # arm-virt
-cargo build --target=aarch64-unknown-none --features "armvirt tpm"    # arm-virt + tpm
+cargo build --target=aarch64-unknown-none --features tpm
+cargo objcopy --target=aarch64-unknown-none --features tpm -- -O binary target/aarch64-unknown-none/debug/msft-sp-virt-tpm.bin
 ```

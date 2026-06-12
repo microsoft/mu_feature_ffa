@@ -21,13 +21,13 @@ Group (TCG) PC Client Specific Platform TPM Profile for TPM 2.0. See
 for more details.
 
 The TPM Service State Translation Library found in FfaFeaturePkg/Library/TpmServiceStateTranslationLib
-is used to translate the CRB interface into the FIFO interface our QEMU SBSA platform uses
+is used to translate the CRB interface into the FIFO interface our QEMU ARM Virt platform uses
 to communicate with the software TPM. See [QEMU TPM Device](https://www.qemu.org/docs/master/specs/tpm.html)
 for more details. In short, the TPM is emulated using an external TPM emulator called "swtpm".
 This "swtpm" behaves like a hardware TPM and must be initialized/started before attempting to
-access it through the TPM emulator in QEMU. Note that building and running QEMU SBSA with
+access it through the TPM emulator in QEMU. Note that building and running QEMU ARM Virt with
 BLD_*_TPM2_ENABLE=TRUE the "swtpm" is automatically initialized and started. If interested,
-code for this can be found in QemuRunner.py which is located in Platforms/QemuSbsaPkg/Plugins/QemuRunner
+code for this can be found in QemuRunner.py which is located in Platforms/QemuArmVirtPkg/Plugins/QemuRunner
 in mu_tiano_platforms.
 
 The TPM service's CRB is accessible by both the normal-world and secure-world but is completely
