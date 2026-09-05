@@ -219,6 +219,7 @@ FfaMiscVerifyVersion (
 {
   UNIT_TEST_STATUS  utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS        Status   = EFI_SUCCESS;
+  UINT32            CurrentVersion;
   UINT16            CurrentMajorVersion;
   UINT16            CurrentMinorVersion;
 
@@ -226,15 +227,16 @@ FfaMiscVerifyVersion (
 
   // Query FF-A version to make sure FF-A is supported
   Status = ArmFfaLibGetVersion (
-             ARM_FFA_MAJOR_VERSION,
-             ARM_FFA_MINOR_VERSION,
-             &CurrentMajorVersion,
-             &CurrentMinorVersion
+             ARM_FFA_CREATE_VERSION (ARM_FFA_MAJOR_VERSION, ARM_FFA_MINOR_VERSION),
+             &CurrentVersion
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed to get FF-A version. Status: %r\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);
   }
+
+  CurrentMajorVersion = ARM_FFA_MAJOR_VERSION_GET (CurrentVersion);
+  CurrentMinorVersion = ARM_FFA_MINOR_VERSION_GET (CurrentVersion);
 
   DEBUG ((DEBUG_INFO, "%a FF-A version: %d.%d\n", __func__, CurrentMajorVersion, CurrentMinorVersion));
 
@@ -772,11 +774,10 @@ FfaMiscTestInterPartitionInvalidMappingCountMin (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS      DirectMsgArgs;
-  NotificationMapping  Mapping;
-  INT8                 ResponseVal;
-  EFI_STATUS           Status;
-  FFA_TEST_CONTEXT     *FfaTestContext;
+  DIRECT_MSG_ARGS   DirectMsgArgs;
+  INT8              ResponseVal;
+  EFI_STATUS        Status;
+  FFA_TEST_CONTEXT  *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -784,7 +785,6 @@ FfaMiscTestInterPartitionInvalidMappingCountMin (
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
   // Register the Thermal Service Notification Invalid Mapping Count Min Value
-  Mapping.Uint64 = 0;
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
   /* Set the receiver service UUID */
   /* x4-x6 (i.e. Arg0-Arg2) should be 0 */
@@ -823,11 +823,10 @@ FfaMiscTestInterPartitionInvalidMappingCountMax (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  DIRECT_MSG_ARGS      DirectMsgArgs;
-  NotificationMapping  Mapping;
-  INT8                 ResponseVal;
-  EFI_STATUS           Status;
-  FFA_TEST_CONTEXT     *FfaTestContext;
+  DIRECT_MSG_ARGS   DirectMsgArgs;
+  INT8              ResponseVal;
+  EFI_STATUS        Status;
+  FFA_TEST_CONTEXT  *FfaTestContext;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
 
@@ -835,7 +834,6 @@ FfaMiscTestInterPartitionInvalidMappingCountMax (
   UT_ASSERT_NOT_NULL (FfaTestContext);
 
   // Register the Thermal Service Notification Invalid Mapping Count Max Value
-  Mapping.Uint64 = 0;
   ZeroMem (&DirectMsgArgs, sizeof (DirectMsgArgs));
   /* Set the receiver service UUID */
   /* x4-x6 (i.e. Arg0-Arg2) should be 0 */

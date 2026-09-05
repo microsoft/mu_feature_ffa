@@ -17,13 +17,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MpInformation.h>
 
 #include <Library/FdtLib.h>
-#include <Library/MmuLib.h>
 #include <Library/ArmSvcLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/SerialPortLib.h>
-#include <Library/ArmStandaloneMmMmuLib.h>
+#include <Library/StandaloneMmMmuLib.h>
 #include <Library/SecurePartitionServicesTableLib.h>
 #include <Library/PcdLib.h>
 
@@ -85,17 +84,19 @@ CheckFfaCompatibility (
 {
   UINT16      SpmcMajorVer;
   UINT16      SpmcMinorVer;
+  UINT32      CurrentVersion;
   EFI_STATUS  Status;
 
   Status = ArmFfaLibGetVersion (
-             ARM_FFA_MAJOR_VERSION,
-             ARM_FFA_MINOR_VERSION,
-             &SpmcMajorVer,
-             &SpmcMinorVer
+             ARM_FFA_CREATE_VERSION (ARM_FFA_MAJOR_VERSION, ARM_FFA_MINOR_VERSION),
+             &CurrentVersion
              );
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
+  SpmcMajorVer = ARM_FFA_MAJOR_VERSION_GET (CurrentVersion);
+  SpmcMinorVer = ARM_FFA_MINOR_VERSION_GET (CurrentVersion);
 
   // If the major versions differ then all bets are off.
   if (SpmcMajorVer != ARM_FFA_MAJOR_VERSION) {
@@ -329,7 +330,6 @@ ModuleEntryPoint (
   PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
   SP_BOOT_INFO                  SpBootInfo = { 0 };
   EFI_STATUS                    Status;
-  INT32                         Ret;
   UINT32                        SectionHeaderOffset;
   UINT16                        NumberOfSections;
   VOID                          *TeData;
@@ -397,9 +397,8 @@ ModuleEntryPoint (
              ImageBase,
              SectionHeaderOffset,
              NumberOfSections,
-             ArmSetMemoryRegionNoExec,
-             ArmSetMemoryRegionReadOnly,
-             ArmClearMemoryRegionReadOnly
+             ArmSetMemoryRegionReadOnlyPerm,
+             ArmSetMemoryRegionReadWritePerm
              );
 
   if (EFI_ERROR (Status)) {
@@ -413,7 +412,7 @@ ModuleEntryPoint (
   if (ImageContext.ImageAddress != (UINTN)TeData) {
     ImageContext.ImageAddress = (UINTN)TeData;
     ArmSetMemoryRegionNoExec (ImageBase, SIZE_4KB);
-    ArmClearMemoryRegionReadOnly (ImageBase, SIZE_4KB);
+    ArmSetMemoryRegionReadWritePerm (ImageBase, SIZE_4KB);
 
     Status = PeCoffLoaderRelocateImage (&ImageContext);
     ASSERT_EFI_ERROR (Status);
@@ -427,13 +426,5 @@ ModuleEntryPoint (
   ProcessModuleEntryPointList (NULL);
 
 finish:
-  if (Status == RETURN_UNSUPPORTED) {
-    Ret = -1;
-  } else if (Status == RETURN_INVALID_PARAMETER) {
-    Ret = -2;
-  } else if (Status == EFI_NOT_FOUND) {
-    Ret = -7;
-  } else {
-    Ret = 0;
-  }
+  return;
 }
