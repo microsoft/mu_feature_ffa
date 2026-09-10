@@ -5,7 +5,7 @@
 #
 #**/
 
-#Override : 00000002 | ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf | 9028122c05affaa65b79cda8ba77dc99 | 2026-02-11T21-07-07 | 0f1e1aefb756eb37248d43a43eac8fc18c0a0c4a
+#Override : 00000002 | ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf | c68c141223c67426fe011eab8933c7ec | 2026-09-05T00-06-01 | 6b7833c5b7fc2ae6a01c748b185337f517bc81b2
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = ArmArchTimerLibEx
