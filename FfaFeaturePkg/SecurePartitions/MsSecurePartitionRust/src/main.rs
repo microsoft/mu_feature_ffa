@@ -37,11 +37,14 @@ fn main() -> ! {
         log::info!("TPM Internal CRB Address: {:X}", tpm_internal_crb_address);
         log::info!("TPM External CRB Address: {:X}", tpm_external_crb_address);
         // Initialize the TPM service with its state-translation backend.
-        let mut svc = TpmService::new(TpmSst::new());
+        let mut svc = TpmService::new(
+            TpmSst::new(tpm_external_crb_address),
+            tpm_internal_crb_address,
+        );
 
         // SAFETY: Writes to the memory-mapped internal CRB regions and initializes
         //         the SST layer for the external TPM device.
-        unsafe { svc.init(tpm_internal_crb_address, tpm_external_crb_address) };
+        unsafe { svc.init() };
         svc
     };
 
