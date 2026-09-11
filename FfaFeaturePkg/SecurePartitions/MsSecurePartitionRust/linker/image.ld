@@ -60,6 +60,7 @@ SECTIONS
 		 */
 		. = ALIGN(32);
 		data_end = .;
+		. = ALIGN(4096);
 	} >image
 
 	/* Everything beyond this point will not be included in the binary. */
