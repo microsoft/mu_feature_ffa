@@ -14,7 +14,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MpInformation.h>
 
 #include <Library/ArmStandaloneMmCoreEntryPoint.h>
-#include <Library/MmuLib.h>
 #include <Library/ArmSvcLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
@@ -34,7 +33,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   @param  [in] ImageBase              Base of image in memory
   @param  [in] SectionHeaderOffset    Offset of PE/COFF image section header
   @param  [in] NumberOfSections       Number of Sections
-  @param  [in] TextUpdater            Function to change code permissions
   @param  [in] ReadOnlyUpdater        Function to change RO permissions
   @param  [in] ReadWriteUpdater       Function to change RW permissions
 
@@ -46,7 +44,6 @@ UpdateMmFoundationPeCoffPermissions (
   IN  EFI_PHYSICAL_ADDRESS                ImageBase,
   IN  UINT32                              SectionHeaderOffset,
   IN  CONST  UINT16                       NumberOfSections,
-  IN  REGION_PERMISSION_UPDATE_FUNC       TextUpdater,
   IN  REGION_PERMISSION_UPDATE_FUNC       ReadOnlyUpdater,
   IN  REGION_PERMISSION_UPDATE_FUNC       ReadWriteUpdater
   )
@@ -54,11 +51,13 @@ UpdateMmFoundationPeCoffPermissions (
   EFI_IMAGE_SECTION_HEADER  SectionHeader;
   RETURN_STATUS             Status;
   EFI_PHYSICAL_ADDRESS      Base;
+  UINT64                    SectionAlignment;
   UINTN                     Size;
   UINTN                     ReadSize;
   UINTN                     Index;
 
   ASSERT (ImageContext != NULL);
+  SectionAlignment = ImageContext->SectionAlignment;
 
   //
   // Iterate over the sections
@@ -127,28 +126,14 @@ UpdateMmFoundationPeCoffPermissions (
       SectionHeader.Misc.VirtualSize
       ));
 
-    // Skip sections with a size of 0
-    if (SectionHeader.Misc.VirtualSize == 0) {
-      DEBUG ((
-        DEBUG_INFO,
-        "%a: Skipping section %a \n",
-        __FUNCTION__,
-        SectionHeader.Name
-        ));
-      continue;
-    }
-
     //
-    // If the section is marked as XN then remove the X attribute. Furthermore,
-    // if it is a writeable section then mark it appropriately as well.
+    // Apply read-only or read-write permissions to non-executable sections.
     //
     if ((SectionHeader.Characteristics & EFI_IMAGE_SCN_MEM_EXECUTE) == 0) {
       Base = ImageBase + SectionHeader.VirtualAddress;
 
-      TextUpdater (Base, SectionHeader.Misc.VirtualSize);
-
       if ((SectionHeader.Characteristics & EFI_IMAGE_SCN_MEM_WRITE) != 0) {
-        ReadWriteUpdater (Base, SectionHeader.Misc.VirtualSize);
+        ReadWriteUpdater (Base, ALIGN_VALUE (SectionHeader.Misc.VirtualSize, SectionAlignment));
         DEBUG ((
           DEBUG_INFO,
           "%a: Mapping section %d of image at 0x%lx with RW-XN permissions\n",
@@ -157,6 +142,7 @@ UpdateMmFoundationPeCoffPermissions (
           ImageContext->ImageAddress
           ));
       } else {
+        ReadOnlyUpdater (Base, ALIGN_VALUE (SectionHeader.Misc.VirtualSize, SectionAlignment));
         DEBUG ((
           DEBUG_INFO,
           "%a: Mapping section %d of image at 0x%lx with RO-XN permissions\n",
