@@ -25,11 +25,9 @@ The following are the steps needed to create a secure partition:
    ```bash
    QemuArmVirtPkg/MsSecurePartition/MsSecurePartition.inf {
     <LibraryClasses>
-      MemoryAllocationLib|MdeModulePkg/Library/BaseMemoryAllocationLibNull/BaseMemoryAllocationLibNull.inf
-      StandaloneMmCoreEntryPoint|ArmPkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
+      MemoryAllocationLib|MdeModulePkg/Library/BaseMemoryAllocationLibNull/BaseMemoryAllocationLibNull.
       Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpmStandaloneMm.inf
       Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibVerbose.inf
-      TimerLib|ArmPkg/Library/ArmArchTimerLibEx/ArmArchTimerLibEx.inf
     <PcdsFixedAtBuild>
       gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x60030000
       gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0x60120000
@@ -121,12 +119,6 @@ The following are steps needed to create a service for a secure partition:
    directory. Note that a service should have an Init, Deinit, and Handler function. Make sure to update the .dec to include
    the path to this header.
 
-   ```bash
-   ##  @libraryclass  Provides an implementation of the TPM Service
-   #
-   TpmServiceLib|Include/Library/TpmServiceLib.h
-   ```
-
 7. Add the UUID/GUID to the uuid variable in the secure partition .dts file. A secure partition can support multiple
    services, each service can be added as a list. (i.e. <\UUID_1>, <\UUID_2>, <\UUID_3>)
 
@@ -136,11 +128,6 @@ The following are steps needed to create a service for a secure partition:
 
 8. Link the service into your secure partition by adding the .inf to the [\LibraryClasses] section of the secure partition's
    .inf file.
-
-   ```bash
-   [LibraryClasses]
-    TpmServiceLib
-   ```
 
 9. In the secure partition .c file, include the headers for the service library. From there you should be able to access
    the Init, Deinit, and handler functions for your service. Note that you will need to extract the UUID from the
