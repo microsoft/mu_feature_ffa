@@ -90,7 +90,6 @@
   ArmFfaLib|MdeModulePkg/Library/ArmFfaLib/ArmFfaDxeLib.inf
   ArmFfaLibEx|FfaFeaturePkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
   PlatformFfaInterruptLib|FfaFeaturePkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
-  TestServiceLib|FfaFeaturePkg/Library/TestServiceLib/TestServiceLib.inf
 
   ArmMtlLib|ArmPkg/Library/ArmMtlLibNull/ArmMtlLibNull.inf
 
@@ -133,8 +132,6 @@
 [Components.common]
   FfaFeaturePkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
   FfaFeaturePkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
-
-  FfaFeaturePkg/Library/TestServiceLib/TestServiceLib.inf
 
 [Components.common.UEFI_APPLICATION]
   FfaFeaturePkg/Applications/FfaPartitionTest/FfaPartitionTestApp.inf
