@@ -9,64 +9,35 @@ manages. Secure partitions can be set to run at S-EL0 or S-EL1 with S-EL1 provid
 
 ## Secure Partitions Implementation
 
+The QEMU Arm Virt platform packages Standalone MM (`stmm`) and the Rust services partition (`mssp-rust`) into TF-A's
+Firmware Image Package (FIP). The previous C `MsSecurePartition` and its service libraries are no longer provided.
+
 The following are the steps needed to create a secure partition:
 
-1. Create a new folder for your secure partition in the Platforms/QemuArmVirtPkg directory making sure to give it a relevant
-   name.
-2. Create the two necessary files: a .c which will contain the implementation for the secure partition and a .inf which
-   will be used to launch the secure partition similar to a DXE driver.
-3. Generate a UUID/GUID for your secure partition, this will distinguish it from other secure partitions.
-4. Add the .inf to the QemuArmVirtPkg.dsc and .fdf files. If overriding the MsSecurePartition, just replace all instances
-   with your secure partition. If wanting to add another secure partition, you will need to add new sections to the .fdf
-   and PlatformBuild.py script to generate a new FV for your secure partition similar to [\FV.FV_STANDALONE_MM_SECURE_PARTITION1].
-
-   .dsc example:
-
-   ```bash
-   QemuArmVirtPkg/MsSecurePartition/MsSecurePartition.inf {
-    <LibraryClasses>
-      MemoryAllocationLib|MdeModulePkg/Library/BaseMemoryAllocationLibNull/BaseMemoryAllocationLibNull.
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpmStandaloneMm.inf
-      Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibVerbose.inf
-    <PcdsFixedAtBuild>
-      gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x60030000
-      gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0x60120000
-      gEfiSecurityPkgTokenSpaceGuid.PcdTpmInternalBaseAddress|0x10000200000
-      gArmTokenSpaceGuid.PcdArmArchTimerFreqInHz|62500000
-    <PcdsPatchableInModule>
-      gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc|FALSE
-   }
-   ```
-
-   .fdf example:
-
-   ```bash
-   [FV.FV_STANDALONE_MM_SECURE_PARTITION1]
-   FvAlignment        = 16
-   ERASE_POLARITY     = 1
-   MEMORY_MAPPED      = TRUE
-   STICKY_WRITE       = TRUE
-   LOCK_CAP           = TRUE
-   LOCK_STATUS        = TRUE
-   WRITE_DISABLED_CAP = TRUE
-   WRITE_ENABLED_CAP  = TRUE
-   WRITE_STATUS       = TRUE
-   WRITE_LOCK_CAP     = TRUE
-   WRITE_LOCK_STATUS  = TRUE
-   READ_DISABLED_CAP  = TRUE
-   READ_ENABLED_CAP   = TRUE
-   READ_STATUS        = TRUE
-   READ_LOCK_CAP      = TRUE
-   READ_LOCK_STATUS   = TRUE
-
-    INF QemuArmVirtPkg/MsSecurePartition/MsSecurePartition.inf
-   ```
-
-5. Create the .dts file for your secure partition and place it in the Platforms/QemuArmVirtPkg/fdts directory. If overriding
-   the MsSecurePartition, the qemu_virt_mssp_config.dts can be updated with the settings related to your secure partition
-   Note that only S-EL0 partitions are supported at this time.
-6. Update the .dts in TFA to include your secure partition and its info. The file is specified through `QEMU_TOS_FW_CONFIG_DTS`
-   for Arm Virt platforms. The file can be found at Platforms/QemuArmVirtPkg/fdts/qemu_virt_tb_fw_config.dts.
+1. Create a Rust crate under [SecurePartitions](../SecurePartitions), using
+   [MsSecurePartitionRust](../SecurePartitions/MsSecurePartitionRust) as an example, and add it to the
+   [Cargo workspace](../../Cargo.toml). To extend the existing partition instead, follow Services Implementation below.
+2. Build the partition for `aarch64-unknown-none` and convert it to a raw `.bin` image as described in Rust Based Secure
+   Partition below. Rust partitions are not EDK II drivers and do not require `.inf`, DSC, or FDF entries.
+3. Generate a FIP package UUID for a new partition. This is separate from the service UUIDs advertised in the partition
+   manifest. When replacing the existing Rust partition, retain its package UUID unless also updating TF-A's
+   configuration.
+4. Add a new partition entry to `GetSpLayoutData()` in the
+   [platform build script][platform-build], using `mssp-rust` as a template.
+   It supplies the image and partition manifest paths, their offsets, the package UUID, and the owner.
+   The script generates `sp_layout.json` and passes it to TF-A through `SP_LAYOUT_FILE`.
+   To replace the existing Rust partition, pass `MSSP_RUST_BIN_FILE=<absolute-path-to-bin>` and, if needed,
+   `MSSP_RUST_DTS_FILE=<absolute-path-to-dts>` on the `stuart_build` command line instead of adding another entry.
+5. Create the partition manifest in the [platform fdts directory][platform-fdts], using
+   [the Rust manifest][rust-manifest] as an example.
+   The current Rust partition runs at S-EL1 (`exception-level = <2>`), not S-EL0. Its load address is `0x0e700000`,
+   image size is `0x400000`, and entrypoint offset is `0x2000`, matching the image offset in the SP layout and the
+   `0x0e702000` origin in its [linker script](../SecurePartitions/MsSecurePartitionRust/linker/qemu-armvirt.ld).
+   For a new partition, assign a distinct ID and boot order, and keep its memory and device mappings consistent with
+   the linker script and SPMC configuration.
+6. Update both TF-A configuration files for a new partition. The
+   [trusted boot configuration][trusted-boot-config] is selected by
+   `QEMU_TB_FW_CONFIG_DTS`. Its `secure-partitions` entries use the FIP package UUIDs from the SP layout:
 
    ```text
    secure-partitions {
@@ -84,7 +55,16 @@ The following are the steps needed to create a secure partition:
    };
    ```
 
-7. Build and run the firmware, you should see Hafnium dispatching your secure partition.
+   [The SPMC configuration][spmc-config] is selected by
+   `QEMU_TOS_FW_CONFIG_DTS`. Add a corresponding `vmN` under `hypervisor` with `is_ffa_partition`, a load address,
+   memory size, and vCPU count matching the partition manifest. Keep partition memory ranges non-overlapping and
+   within the configured trusted memory.
+
+7. [Build and run the firmware][platform-build-guide]; you should see Hafnium dispatching your
+   secure partition. Use `HAF_TFA_BUILD=TRUE` to rebuild the FIP when changing manifests, package UUIDs, or the SP
+   layout. `HAF_TFA_BUILD=FALSE` only patches images into a copy of the prebuilt FIP, using `fip_blob_manifest.json`
+   from the selected `HAF_TFA_BINS` variant (`TPM` or `DEF`). It does not update manifests or add partitions, and
+   replacement images must fit the existing allocation.
 
 ## Services Overview
 
@@ -98,48 +78,48 @@ partition is able to figure out which service to pass along the message to.
 
 The following are steps needed to create a service for a secure partition:
 
-1. Create a new folder for your service in the Path/To/Pkg/Library directory making sure to give it a
-   relevant name.
-2. Create the two necessary files: a .c which will contain the implementation for the service and a .inf which will be
-   used to link in your service library to your secure partition.
-3. Generate a UUID/GUID for your service, this will be used by FF-A DIRECT_REQ2 to route the message correctly to the
-   secure partition and the proper service.
-4. Place this UUID/GUID in a .h file which will be added to the Path/To/Pkg/Include/Guid directory. This file should also
-   contain the OPCODES your service will support.
-5. Create a global EFI_GUID extern which will hold the UUID/GUID of your service. Make sure it is initialized in the .dec
-   file. This will give you an easy way to compare the UUID/GUID against other UUIDs/GUIDs received through FF-A.
+1. Create a Rust service crate under [SecurePartitions](../SecurePartitions), using
+   [TestServiceLibRust](../SecurePartitions/TestServiceLibRust) as an example. Add it to the
+   [Cargo workspace](../../Cargo.toml) and declare it as a dependency of the partition in its
+   [Cargo.toml](../SecurePartitions/MsSecurePartitionRust/Cargo.toml).
+2. Generate a UUID for your service and define its supported opcodes. Implement `ec_service_lib::Service`, supplying
+   `UUID`, `NAME`, and the `ffa_msg_send_direct_req2` handler. See the
+   [Test service implementation](../SecurePartitions/TestServiceLibRust/src/test_svc.rs) for an example using
+   `MsgSendDirectReq2` and `MsgSendDirectResp2`.
+3. Add the service UUID to the `uuid` list in the partition manifest, retaining the existing entries. Each UUID is
+   represented by four little-endian 32-bit words of its UUID bytes. For example, the Test service UUID
+   `e0fad9b3-7f5c-42c5-b2ee-b7a82313cdb2` is the second entry in the current Rust manifest:
 
-   ```bash
-   ## TPM Service over FF-A
-   # Include/Guid/Tpm2ServiceFfa.h
-   gTpm2ServiceFfaGuid = { 0x17b862a4, 0x1806, 0x4faf, { 0x86, 0xb3, 0x08, 0x9a, 0x58, 0x35, 0x38, 0x61 } }
+   ```dts
+   uuid = <0x7ed874e4 0x44403157 0x3ecb27a7 0xdfc8f38c>, <0xb3d9fae0 0xc5425c7f 0xa8b7eeb2 0xb2cd1323>, <0xa462b817 0xaf4f0618 0x9a08b386 0x61383558>;
    ```
 
-6. Create a .h file that will contain all of the global functions related to your service. Place this file in the Path/To/Pkg/Include/Library
-   directory. Note that a service should have an Init, Deinit, and Handler function. Make sure to update the .dec to include
-   the path to this header.
-
-7. Add the UUID/GUID to the uuid variable in the secure partition .dts file. A secure partition can support multiple
-   services, each service can be added as a list. (i.e. <\UUID_1>, <\UUID_2>, <\UUID_3>)
-
-   ```bash
-   uuid = <0xb510b3a3 0x59f64054 0xba7aff2e 0xb1eac765>, <0x17b862a4 0x18064faf 0x86b3089a 0x58353861>, <0xe0fad9b3 0x7f5c42c5 0xb2eeb7a8 0x2313cdb2>;
-   ```
-
-8. Link the service into your secure partition by adding the .inf to the [\LibraryClasses] section of the secure partition's
-   .inf file.
-
-9. In the secure partition .c file, include the headers for the service library. From there you should be able to access
-   the Init, Deinit, and handler functions for your service. Note that you will need to extract the UUID from the
-   DIRECT_REQ2 message and route it to the correct service. Including the UUID/GUID header from step 4 will allow you to
-   use the variable you created in step 5.
+4. Instantiate and initialize the service in the partition's
+   [main.rs](../SecurePartitions/MsSecurePartitionRust/src/main.rs), then register it with
+   `MessageHandler::new().append(...)` before `run_message_loop()`. The message handler routes DIRECT_REQ2 messages to
+   the service by UUID; no C service table, `.inf`, or `.dec` registration is needed.
+5. Rebuild the partition binary and integrate it using `MSSP_RUST_BIN_FILE`. Rebuild TF-A with `HAF_TFA_BUILD=TRUE`
+   when changing the advertised service UUIDs in the manifest.
 
 ## Rust Based Secure Partition
 
-This repo provides a Rust based secure partition implementation [example](../../FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/Cargo.toml),
+This repo provides a Rust based secure partition implementation
+[example](../SecurePartitions/MsSecurePartitionRust/Cargo.toml),
 which can be used to host FF-A services.
 
-The Rust based services are implemented based on `haf-ec-service` and its underlying embassy framework. For platforms
-targeting Rust, this provides a more ergonomic and safe way to implement secure partition services.
+The Rust based services use `ec-service-lib` and `odp-ffa` from `odp-secure-services`, with `aarch64-rt` providing the
+S-EL1 entry point and exception handling.
 
-Building instruction for the configured Rust secure partition can be found at [the document at its directory](../../FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust/README.md)
+Build instructions are in the [partition README](../SecurePartitions/MsSecurePartitionRust/README.md).
+Run these commands from the [FF-A workspace root](../..), since the linker script paths are workspace-relative.
+The platform build does not compile this Rust crate; by default it uses binaries from the `SECURE_PARTITION_BINARIES`
+external dependency. `BLD_*_TPM2_ENABLE=TRUE` selects `msft-sp-virt-tpm.bin`; otherwise it selects `msft-sp-virt.bin`.
+For a local build, use the `tpm` Cargo feature when TPM is enabled and pass the matching binary through
+`MSSP_RUST_BIN_FILE`. Use `MSSP_RUST_DTS_FILE` when supplying a custom manifest as well.
+
+[platform-build]: https://github.com/OpenDevicePartnership/patina-qemu/blob/main/Platforms/QemuArmVirtPkg/PlatformBuild.py
+[platform-fdts]: https://github.com/OpenDevicePartnership/patina-qemu/tree/main/Platforms/QemuArmVirtPkg/fdts
+[rust-manifest]: https://github.com/OpenDevicePartnership/patina-qemu/blob/main/Platforms/QemuArmVirtPkg/fdts/qemu_virt_mssp_rust_config.dts
+[trusted-boot-config]: https://github.com/OpenDevicePartnership/patina-qemu/blob/main/Platforms/QemuArmVirtPkg/fdts/qemu_virt_tb_fw_config.dts
+[spmc-config]: https://github.com/OpenDevicePartnership/patina-qemu/blob/main/Platforms/QemuArmVirtPkg/fdts/qemu_virt_spmc_sp_manifest.dts
+[platform-build-guide]: https://github.com/OpenDevicePartnership/patina-qemu/blob/main/docs/src/building/building.md
