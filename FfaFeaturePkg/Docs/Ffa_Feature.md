@@ -28,14 +28,7 @@ The repository is organized to host a variety of components, including:
 
 | Name | Description |
 |------|-------------|
-| ArmArchTimerLibEx | Provides temporary timer services for secure partitions if the SPMC at EL2 does not support EL1 timer. |
-| ArmFfaLibEx | Provides additional FF-A functionalities, such as notification set and get, console logging through SPMC. |
-| NotificationServiceLib | C implementation of notification services for secure partitions, allowing them to send and receive notifications. |
-| SecurePartitionEntryPoint | UEFI style C implementation of the entry point for secure partitions executing at S-EL0, handling initialization and communication with the SPMC. |
-| SecurePartitionMemoryAllocationLib | UEFI style C implementation of memory allocation services for secure partitions. |
-| SecurePartitionServicesTableLib | UEFI style C implementation of the services table for secure partitions, providing a collection of common resources needed by secure partitions, i.e. FDT addresses. |
-| TestServiceLib | UEFI style C implementation of a test service for secure partitions, allowing for testing and validation of secure partition functionality. |
-| TpmServiceLib | UEFI style C implementation of a TPM service for secure partitions. See secure partition documentation for more details. |
+| ArmFfaLibEx | Provides FF-A resource information queries and notification management on top of ArmFfaLib. |
 
 ### Rust Crates for Services
 
@@ -49,7 +42,6 @@ This section only lists the Rust crates available in _this_ repository. The exte
 
 | Name | Description |
 |------|-------------|
-| MsSecurePartition | UEFI style C implementation of a secure partition for the FF-A framework. It currently supports [TPM services](https://developer.arm.com/documentation/den0138/latest) |
 | MsSecurePartitionRust | Rust implementation of a secure partition for the FF-A framework. It currently supports `Inter-partition protocol` defined in [FF-A spec](https://developer.arm.com/documentation/den0077/latest) |
 
 #### Test Application
@@ -60,4 +52,4 @@ This section only lists the Rust crates available in _this_ repository. The exte
 
 ### Platform Integration
 
-See [Platform Integration](PartitionGuid.md) for more information on integrating FF-A with platform firmware.
+See [Platform Integration](PartitionGuide.md) for more information on integrating FF-A with platform firmware.

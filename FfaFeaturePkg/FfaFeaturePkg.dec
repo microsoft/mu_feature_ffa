@@ -28,34 +28,9 @@
   Include                        # Root include for the package
 
 [LibraryClasses.common]
-  ##  @libraryclass  Provides an interface for platform abstraction to handle
-  #   interrupts.
-  #
-  PlatformFfaInterruptLib|Include/Library/PlatformFfaInterruptLib.h
-
   ##  @libraryclass  Provides an interface for a Arm FF-A ABI.
   #
   ArmFfaLibEx|Include/Library/ArmFfaLibEx.h
-
-  ##  @libraryclass  Provides a services table for Secure partitions.
-  #
-  SecurePartitionServicesTableLib|Include/Library/SecurePartitionServicesTableLib.h
-
-  ##  @libraryclass  Provides an implementation of the Notification Service
-  #
-  NotificationServiceLib|Include/Library/NotificationServiceLib.h
-
-  ##  @libraryclass  Provides an implementation of the Test Service
-  #
-  TestServiceLib|Include/Library/TestServiceLib.h
-
-  ##  @libraryclass  Provides an implementation of the TPM Service
-  #
-  TpmServiceLib|Include/Library/TpmServiceLib.h
-
-  ##  @libraryclass  Provides an translation library for the TPM Service
-  #
-  TpmServiceStateTranslationLib|Include/Library/TpmServiceStateTranslationLib.h
 
 [Guids.common]
   ## Notification Service over FF-A
