@@ -28,7 +28,7 @@ The repository is organized to host a variety of components, including:
 
 | Name | Description |
 |------|-------------|
-| ArmFfaLibEx | Provides additional FF-A functionalities, such as notification set and get, console logging through SPMC. |
+| ArmFfaLibEx | Provides FF-A resource information queries and notification management on top of ArmFfaLib. |
 
 ### Rust Crates for Services
 

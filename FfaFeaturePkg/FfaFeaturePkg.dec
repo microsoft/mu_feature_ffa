@@ -28,11 +28,6 @@
   Include                        # Root include for the package
 
 [LibraryClasses.common]
-  ##  @libraryclass  Provides an interface for platform abstraction to handle
-  #   interrupts.
-  #
-  PlatformFfaInterruptLib|Include/Library/PlatformFfaInterruptLib.h
-
   ##  @libraryclass  Provides an interface for a Arm FF-A ABI.
   #
   ArmFfaLibEx|Include/Library/ArmFfaLibEx.h
