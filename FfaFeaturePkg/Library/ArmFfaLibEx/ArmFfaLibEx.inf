@@ -1,6 +1,6 @@
 #/** @file
 #
-#  Component description file for FfaHelperLib module
+#  Component description file for ArmFfaLibEx
 #
 #  Copyright (c), Microsoft Corporation.
 #
@@ -21,14 +21,8 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
   FfaFeaturePkg/FfaFeaturePkg.dec
 
 [LibraryClasses]
+  ArmFfaLib
   DebugLib
-  PlatformFfaInterruptLib
-  ArmSvcLib
-  ArmSmcLib
-
-[Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc

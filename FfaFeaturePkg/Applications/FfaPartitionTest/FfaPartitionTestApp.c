@@ -261,7 +261,6 @@ FfaMiscGetPartitionInfoRegs (
 {
   EFI_STATUS              Status = EFI_SUCCESS;
   EFI_FFA_PART_INFO_DESC  FfaPartInfo;
-  ARM_SMC_ARGS            SmcArgs;
   UINT32                  Count;
   UINTN                   Index;
   FFA_TEST_CONTEXT        *FfaTestContext;
@@ -287,14 +286,12 @@ FfaMiscGetPartitionInfoRegs (
   //
   for (Index = 0; Index < ARRAY_SIZE (GuidsOfInterest); Index++) {
     // Get the partition information of the STMM SP
-    ZeroMem (&SmcArgs, sizeof (SmcArgs));
+    ZeroMem (&FfaPartInfo, sizeof (FfaPartInfo));
     Count = 1; // We expect only one partition info
     DEBUG ((DEBUG_INFO, "%a: Querying partition info for %g...\n", __func__, GuidsOfInterest[Index]));
-    Status = FfaPartitionInfoGetRegs (GuidsOfInterest[Index], 0, NULL, &Count, (EFI_FFA_PART_INFO_DESC *)&SmcArgs.Arg3);
+    Status = ArmFfaLibPartitionInfoGetRegs (GuidsOfInterest[Index], &Count, &FfaPartInfo);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Failed to get FF-A partition info. Status: %r\n", Status));
-    } else {
-      CopyMem (&FfaPartInfo, &SmcArgs.Arg3, sizeof (EFI_FFA_PART_INFO_DESC));
     }
 
     if (CompareGuid (GuidsOfInterest[Index], &gEfiMmCommunication2ProtocolGuid)) {
@@ -449,7 +446,7 @@ FfaMiscSetupNotifications (
 
   // Then register this test app to receive notifications from the Ffa test SP
   BindBitPos = 0x02;
-  FfaNotificationBind (FfaTestContext->FfaTestServicePartId, 0, (1 << BindBitPos));
+  Status = FfaNotificationBind (FfaTestContext->FfaTestServicePartId, 0, (1 << BindBitPos));
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unable to bind notification with FF-A Ffa test SP (%r).\n", Status));
     UT_ASSERT_NOT_EFI_ERROR (Status);

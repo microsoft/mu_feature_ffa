@@ -89,11 +89,6 @@
   ArmTransferListLib|ArmPkg/Library/ArmTransferListLib/ArmTransferListLib.inf
   ArmFfaLib|MdeModulePkg/Library/ArmFfaLib/ArmFfaDxeLib.inf
   ArmFfaLibEx|FfaFeaturePkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
-  PlatformFfaInterruptLib|FfaFeaturePkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
-  NotificationServiceLib|FfaFeaturePkg/Library/NotificationServiceLib/NotificationServiceLib.inf
-  TestServiceLib|FfaFeaturePkg/Library/TestServiceLib/TestServiceLib.inf
-  TpmServiceLib|FfaFeaturePkg/Library/TpmServiceLib/TpmServiceLib.inf
-  TpmServiceStateTranslationLib|FfaFeaturePkg/Library/TpmServiceStateTranslationLib/TpmServiceStateTranslationLib.inf
 
   ArmMtlLib|ArmPkg/Library/ArmMtlLibNull/ArmMtlLibNull.inf
 
@@ -134,20 +129,7 @@
   UnitTestResultReportLib|UnitTestFrameworkPkg/Library/UnitTestResultReportLib/UnitTestResultReportLibDebugLib.inf
 
 [Components.common]
-  FfaFeaturePkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
   FfaFeaturePkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
-  FfaFeaturePkg/Library/SecurePartitionServicesTableLib/SecurePartitionServicesTableLib.inf
-  FfaFeaturePkg/Library/SecurePartitionMemoryAllocationLib/SecurePartitionMemoryAllocationLib.inf
-
-  FfaFeaturePkg/Library/NotificationServiceLib/NotificationServiceLib.inf
-  FfaFeaturePkg/Library/TestServiceLib/TestServiceLib.inf
-  FfaFeaturePkg/Library/TpmServiceLib/TpmServiceLib.inf
-  FfaFeaturePkg/Library/TpmServiceStateTranslationLib/TpmServiceStateTranslationLib.inf
-
-  FfaFeaturePkg/Library/ArmArchTimerLibEx/ArmArchTimerLibEx.inf
-
-[Components.AARCH64]
-  FfaFeaturePkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
 
 [Components.common.UEFI_APPLICATION]
   FfaFeaturePkg/Applications/FfaPartitionTest/FfaPartitionTestApp.inf

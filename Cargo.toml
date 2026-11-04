@@ -3,7 +3,7 @@ resolver = "2"
 
 # Add packages that generate binaries here
 members = [
-  "FfaFeaturePkg/Library/TestServiceLibRust",
+  "FfaFeaturePkg/SecurePartitions/TestServiceLibRust",
   "FfaFeaturePkg/SecurePartitions/MsSecurePartitionRust"
 ]
 
@@ -20,4 +20,4 @@ odp-ffa = { git = "https://github.com/OpenDevicePartnership/odp-secure-services"
 hafnium = { git = "https://github.com/OpenDevicePartnership/odp-secure-services", rev = "1422b1c3" }
 log = { version = "0.4", default-features = false }
 uuid = { version = "1.0", default-features = false, features = ["v1"] }
-test-service-lib = { path = "FfaFeaturePkg/Library/TestServiceLibRust" }
+test-service-lib = { path = "FfaFeaturePkg/SecurePartitions/TestServiceLibRust" }
